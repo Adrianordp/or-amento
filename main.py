@@ -1,12 +1,15 @@
 # This Python file uses the following encoding: utf-8
 import sys
-from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel
+from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox
 from PySide2.QtCore import QObject, SIGNAL
-# sfrom PySide2.QtGui import QObject
+# sfrom PySide2.QtGui import *
 
+orderNumber  = 1;
+tradicionals = ['Calabresa', 'Frango', 'Margerita', 'Mista', 'Mussarela']
+specials     = ['Frango com catupiry', 'Portuguesa', '']
+premiums     = ['Pepperoni']
 
 class MainWindow(QMainWindow):
-    # INITIALIZATION FUNCTION
     def __init__(self):
         super(MainWindow, self).__init__()
 
@@ -31,19 +34,29 @@ class MainWindow(QMainWindow):
         self.labelAddr    = QLabel("Endereço:"); self.editAddr     = QLineEdit()
         self.labelBurgh   = QLabel("Bairro:")  ; self.editBurgh    = QLineEdit()
         self.labelAllergy = QLabel("Alergia")  ; self.editAllergy  = QLineEdit()
-        self.labelObs     = QLabel("Obs.:")    ; self.editObs      = QTextEdit()
+        self.labelObs     = QLabel("Obs.:")    ; self.editObs      = QLineEdit()
 
-        self.editObs.setFixedHeight(40)
+#        self.editObs.setFixedHeight(40)
 
         self.labelQtd = QLabel("Qtd."); self.labelItem = QLabel("Item"); self.labelPriceU  = QLabel("Preço u."); self.labelPriceT  = QLabel("Preço t.")
-        self.editQtd1 = QLineEdit()   ; self.combo1    = QComboBox()   ; self.labelPriceU1 = QLabel("R$ 0,00") ; self.labelPriceT1 = QLabel("R$ 0,00")
-        self.editQtd2 = QLineEdit()   ; self.combo2    = QComboBox()   ; self.labelPriceU2 = QLabel("R$ 0,00") ; self.labelPriceT2 = QLabel("R$ 0,00")
-        self.editQtd3 = QLineEdit()   ; self.combo3    = QComboBox()   ; self.labelPriceU3 = QLabel("R$ 0,00") ; self.labelPriceT3 = QLabel("R$ 0,00")
-        self.editQtd4 = QLineEdit()   ; self.combo4    = QComboBox()   ; self.labelPriceU4 = QLabel("R$ 0,00") ; self.labelPriceT4 = QLabel("R$ 0,00")
-        self.editQtd5 = QLineEdit()   ; self.combo5    = QComboBox()   ; self.labelPriceU5 = QLabel("R$ 0,00") ; self.labelPriceT5 = QLabel("R$ 0,00")
-        self.editQtd6 = QLineEdit()   ; self.combo6    = QComboBox()   ; self.labelPriceU6 = QLabel("R$ 0,00") ; self.labelPriceT6 = QLabel("R$ 0,00")
-        self.editQtd7 = QLineEdit()   ; self.combo7    = QComboBox()   ; self.labelPriceU7 = QLabel("R$ 0,00") ; self.labelPriceT7 = QLabel("R$ 0,00")
-        self.editQtd8 = QLineEdit()   ; self.combo8    = QComboBox()   ; self.labelPriceU8 = QLabel("R$ 0,00") ; self.labelPriceT8 = QLabel("R$ 0,00")
+        self.editQtd1 = QSpinBox()    ; self.combo1    = QComboBox()   ; self.labelPriceU1 = QLabel("R$ 0,00") ; self.labelPriceT1 = QLabel("R$ 0,00")
+        self.editQtd2 = QSpinBox()    ; self.combo2    = QComboBox()   ; self.labelPriceU2 = QLabel("R$ 0,00") ; self.labelPriceT2 = QLabel("R$ 0,00")
+        self.editQtd3 = QSpinBox()    ; self.combo3    = QComboBox()   ; self.labelPriceU3 = QLabel("R$ 0,00") ; self.labelPriceT3 = QLabel("R$ 0,00")
+        self.editQtd4 = QSpinBox()    ; self.combo4    = QComboBox()   ; self.labelPriceU4 = QLabel("R$ 0,00") ; self.labelPriceT4 = QLabel("R$ 0,00")
+        self.editQtd5 = QSpinBox()    ; self.combo5    = QComboBox()   ; self.labelPriceU5 = QLabel("R$ 0,00") ; self.labelPriceT5 = QLabel("R$ 0,00")
+        self.editQtd6 = QSpinBox()    ; self.combo6    = QComboBox()   ; self.labelPriceU6 = QLabel("R$ 0,00") ; self.labelPriceT6 = QLabel("R$ 0,00")
+        self.editQtd7 = QSpinBox()    ; self.combo7    = QComboBox()   ; self.labelPriceU7 = QLabel("R$ 0,00") ; self.labelPriceT7 = QLabel("R$ 0,00")
+        self.editQtd8 = QSpinBox()    ; self.combo8    = QComboBox()   ; self.labelPriceU8 = QLabel("R$ 0,00") ; self.labelPriceT8 = QLabel("R$ 0,00")
+
+        self.list = ['','Calabresa','Frango','Frango com catupiry','Margerita','Mista','Mussarela','Pepperoni', 'Portuguesa']
+        self.combo1.insertItems(0, self.list); self.combo1.currentIndexChanged.connect(self.price1)
+        self.combo2.insertItems(1, self.list)
+        self.combo3.insertItems(2, self.list)
+        self.combo4.insertItems(3, self.list)
+        self.combo5.insertItems(4, self.list)
+        self.combo6.insertItems(5, self.list)
+        self.combo7.insertItems(6, self.list)
+        self.combo8.insertItems(7, self.list)
 
         self.editQtd1.setMaximumWidth(50);
         self.editQtd2.setMaximumWidth(50);
@@ -54,16 +67,13 @@ class MainWindow(QMainWindow):
         self.editQtd7.setMaximumWidth(50);
         self.editQtd8.setMaximumWidth(50);
 
-        self.labelDate = QLabel("Data: 07/07/2020"); self.labelOrder = QLabel("#Pedido"); self.labelTotal = QLabel("R$ 0,00")
+        orderStr = "Pedido n#"+str(orderNumber)
+        totalStr = "Valor Total = R$ 0,00"
+        self.labelDate = QLabel("Data: 07/07/2020"); self.labelOrder = QLabel(orderStr); self.labelTotal = QLabel(totalStr)
         self.buttonConfirm = QPushButton("Confirmar pedido")
-
-        # Disabling buttons for latter usage
-        self.buttonConfirm.setEnabled(False)
-
-        # Defining button functions
         self.buttonConfirm.clicked.connect(self.confirmClick)
+#        self.buttonConfirm.setEnabled(False)
 
-        # Layout setup (except pptk container)
         self.infoLayout = QGridLayout(self.infoGroup)
         self.infoLayout.addWidget(self.labelClient , 0, 0)
         self.infoLayout.addWidget(self.editClient  , 0, 1)
@@ -121,66 +131,40 @@ class MainWindow(QMainWindow):
         self.endLayout.addWidget(self.labelDate, 0, 0)
         self.endLayout.addWidget(self.labelOrder, 0, 1)
         self.endLayout.addWidget(self.labelTotal, 0, 2)
-        self.endLayout.setRowStretch(1,4)
-        self.endLayout.addWidget(self.buttonConfirm, 1, 0)
+        self.endLayout.addWidget(self.buttonConfirm, 1, 2)
 
-    # CLICK: Confirm modification
+    # CLICK: Confirm order
+    def price1(self):
+        global orderNumber
+        qtd = self.editQtd1.value()
+        if self.combo1.currentText() in tradicionals:
+            price = 20
+        elif self.combo1.currentText() in specials:
+            price = 25
+        elif self.combo1.currentText() in premiums:
+            price = 30
+        else:
+            price = 0
+        self.labelPriceU1.setText('R$ '+str(price)+',00')
+        self.labelPriceT1.setText('R$ '+str(price*qtd)+',00')
+
+
+
+
+
+
     def confirmClick(self):
-        pass
-#        # Modified global variables
-#        global xyz, v, flagModification, counter, index, history, historyAfter, historyBefore
+        global orderNumber
+        orderNumber += 1
+        orderStr = "Pedido n#"+str(orderNumber)
+        self.labelOrder.setText(orderStr)
 
-#        # Status message
-#        self.dialogBox.clear()
-#        self.dialogBox.textCursor().insertText('Buscando ponto selecionados...\n')
-#        self.repaint()
-
-#        ##### Segmentar Nuvem de Pontos #####
-#        # Collects selected points indexes
-#        sel = v.get('selected')
-#        nSel = len(sel)
-#        # Create a numpy matrixes of selected points
-#        if nSel == 0:
-#           # Status message
-#           self.dialogBox.moveCursor(QtGui.QTextCursor.End)
-#           self.dialogBox.textCursor().insertText('Alerta: nenhum ponto selecionado!\nUtilize o botão esquerdo do mouse (BEM) com a tecla Control para efetuar seleção no campo de nuvem de pontos: BEM+Ctrl')
-#           self.repaint()
-#           return
-
-#        # Create a vector of selected points
-#        xyz = xyz[sel,:]
-#        # Register z values (used to coloring)
-#        z = xyz[:,2]
-
-#        # Embed pptk
-#        self.setPointCloud(xyz,z)
-
-#        # Manage action history
-#        counter += 1
-#        index = counter
-#        history.append(index)
-#        historyBefore = history
-
-#        # Save current cloud in cache
-#        np.savetxt(pathToCachedPC, xyz)
-#        np.savetxt(pathToTemp+ID+counter.__str__(),xyz)
-
-#        # Set modification flag
-#        flagModification = True
-#        # Enable folowing buttons
-#        self.buttonVolume.setEnabled(True)
-#        self.buttonSave.setEnabled(True)
-#        self.buttonUndo.setEnabled(True)
-
-#        # Status message
-#        self.dialogBox.textCursor().insertText(str(nSel)+' pontos selecionados.\n')
-#        self.repaint()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setStyle("fusion")
     form = MainWindow()
     form.setWindowTitle('Editor de Nuvem de Pontos')
-    form.setGeometry(100, 100, 300, 300)
+    form.setGeometry(100, 100, 500, 500)
     form.show()
     sys.exit(app.exec_())

@@ -5,8 +5,10 @@ from PySide2.QtCore import QObject, SIGNAL
 # sfrom PySide2.QtGui import *
 
 orderNumber  = 1;
+priceVec     = [0,0,0,0,0,0,0,0]
+TOTAL        = 0
 tradicionals = ['Calabresa', 'Frango', 'Margerita', 'Mista', 'Mussarela']
-specials     = ['Frango com catupiry', 'Portuguesa', '']
+specials     = ['Frango com catupiry', 'Portuguesa']
 premiums     = ['Pepperoni']
 
 class MainWindow(QMainWindow):
@@ -18,9 +20,9 @@ class MainWindow(QMainWindow):
         # Layout object
         self.mainLayout = QGridLayout(self.mainWidget)
 
-        self.infoGroup  = QGroupBox()
-        self.comboGroup = QGroupBox()
-        self.endGroup   = QGroupBox()
+        self.infoGroup  = QGroupBox("Dados")
+        self.comboGroup = QGroupBox("Pedido")
+        self.endGroup   = QGroupBox("Resumo")
 
         self.mainLayout.addWidget(self.infoGroup, 0, 0)
         self.mainLayout.addWidget(self.comboGroup, 1, 0)
@@ -36,43 +38,51 @@ class MainWindow(QMainWindow):
         self.labelAllergy = QLabel("Alergia")  ; self.editAllergy  = QLineEdit()
         self.labelObs     = QLabel("Obs.:")    ; self.editObs      = QLineEdit()
 
+        self.editClient.textChanged.connect(self.checkMinimumData)
+        self.editPhone.textChanged.connect(self.checkMinimumData)
+        self.editAddr.textChanged.connect(self.checkMinimumData)
+        self.editBurgh.textChanged.connect(self.checkMinimumData)
+
 #        self.editObs.setFixedHeight(40)
 
-        self.labelQtd = QLabel("Qtd."); self.labelItem = QLabel("Item"); self.labelPriceU  = QLabel("Preço u."); self.labelPriceT  = QLabel("Preço t.")
-        self.editQtd1 = QSpinBox()    ; self.combo1    = QComboBox()   ; self.labelPriceU1 = QLabel("R$ 0,00") ; self.labelPriceT1 = QLabel("R$ 0,00")
-        self.editQtd2 = QSpinBox()    ; self.combo2    = QComboBox()   ; self.labelPriceU2 = QLabel("R$ 0,00") ; self.labelPriceT2 = QLabel("R$ 0,00")
-        self.editQtd3 = QSpinBox()    ; self.combo3    = QComboBox()   ; self.labelPriceU3 = QLabel("R$ 0,00") ; self.labelPriceT3 = QLabel("R$ 0,00")
-        self.editQtd4 = QSpinBox()    ; self.combo4    = QComboBox()   ; self.labelPriceU4 = QLabel("R$ 0,00") ; self.labelPriceT4 = QLabel("R$ 0,00")
-        self.editQtd5 = QSpinBox()    ; self.combo5    = QComboBox()   ; self.labelPriceU5 = QLabel("R$ 0,00") ; self.labelPriceT5 = QLabel("R$ 0,00")
-        self.editQtd6 = QSpinBox()    ; self.combo6    = QComboBox()   ; self.labelPriceU6 = QLabel("R$ 0,00") ; self.labelPriceT6 = QLabel("R$ 0,00")
-        self.editQtd7 = QSpinBox()    ; self.combo7    = QComboBox()   ; self.labelPriceU7 = QLabel("R$ 0,00") ; self.labelPriceT7 = QLabel("R$ 0,00")
-        self.editQtd8 = QSpinBox()    ; self.combo8    = QComboBox()   ; self.labelPriceU8 = QLabel("R$ 0,00") ; self.labelPriceT8 = QLabel("R$ 0,00")
-
+        self.combo = [1,2,3,4,5,6,7,8]
+        self.labelPriceU = [1,2,3,4,5,6,7,8]
+        self.labelPriceT = [1,2,3,4,5,6,7,8]
+        self.editQtd = [1,2,3,4,5,6,7,8]
         self.list = ['','Calabresa','Frango','Frango com catupiry','Margerita','Mista','Mussarela','Pepperoni', 'Portuguesa']
-        self.combo1.insertItems(0, self.list); self.combo1.currentIndexChanged.connect(self.price1)
-        self.combo2.insertItems(1, self.list)
-        self.combo3.insertItems(2, self.list)
-        self.combo4.insertItems(3, self.list)
-        self.combo5.insertItems(4, self.list)
-        self.combo6.insertItems(5, self.list)
-        self.combo7.insertItems(6, self.list)
-        self.combo8.insertItems(7, self.list)
+        for i in range (0,8):
+            self.combo[i] = QComboBox()
+            self.labelPriceU[i] = QLabel("R$ 0,00")
+            self.labelPriceT[i] = QLabel("R$ 0,00")
+            self.editQtd[i] = QSpinBox()
+            self.editQtd[i].setMaximumWidth(50);
 
-        self.editQtd1.setMaximumWidth(50);
-        self.editQtd2.setMaximumWidth(50);
-        self.editQtd3.setMaximumWidth(50);
-        self.editQtd4.setMaximumWidth(50);
-        self.editQtd5.setMaximumWidth(50);
-        self.editQtd6.setMaximumWidth(50);
-        self.editQtd7.setMaximumWidth(50);
-        self.editQtd8.setMaximumWidth(50);
+        self.labelQtd = QLabel("Qtd."); self.labelItem = QLabel("Item"); self.labelPriceUStr = QLabel("Preço uni."); self.labelPriceTStr = QLabel("Preço total")
+
+        self.combo[0].insertItems(0, self.list); self.combo[0].currentIndexChanged.connect(lambda: self.price(0))
+        self.combo[1].insertItems(0, self.list); self.combo[1].currentIndexChanged.connect(lambda: self.price(1))
+        self.combo[2].insertItems(0, self.list); self.combo[2].currentIndexChanged.connect(lambda: self.price(2))
+        self.combo[3].insertItems(0, self.list); self.combo[3].currentIndexChanged.connect(lambda: self.price(3))
+        self.combo[4].insertItems(0, self.list); self.combo[4].currentIndexChanged.connect(lambda: self.price(4))
+        self.combo[5].insertItems(0, self.list); self.combo[5].currentIndexChanged.connect(lambda: self.price(5))
+        self.combo[6].insertItems(0, self.list); self.combo[6].currentIndexChanged.connect(lambda: self.price(6))
+        self.combo[7].insertItems(0, self.list); self.combo[7].currentIndexChanged.connect(lambda: self.price(7))
+
+        self.editQtd[0].valueChanged.connect(lambda: self.price(0))
+        self.editQtd[1].valueChanged.connect(lambda: self.price(1))
+        self.editQtd[2].valueChanged.connect(lambda: self.price(2))
+        self.editQtd[3].valueChanged.connect(lambda: self.price(3))
+        self.editQtd[4].valueChanged.connect(lambda: self.price(4))
+        self.editQtd[5].valueChanged.connect(lambda: self.price(5))
+        self.editQtd[6].valueChanged.connect(lambda: self.price(6))
+        self.editQtd[7].valueChanged.connect(lambda: self.price(7))
 
         orderStr = "Pedido n#"+str(orderNumber)
         totalStr = "Valor Total = R$ 0,00"
         self.labelDate = QLabel("Data: 07/07/2020"); self.labelOrder = QLabel(orderStr); self.labelTotal = QLabel(totalStr)
         self.buttonConfirm = QPushButton("Confirmar pedido")
         self.buttonConfirm.clicked.connect(self.confirmClick)
-#        self.buttonConfirm.setEnabled(False)
+        self.buttonConfirm.setEnabled(False)
 
         self.infoLayout = QGridLayout(self.infoGroup)
         self.infoLayout.addWidget(self.labelClient , 0, 0)
@@ -90,42 +100,15 @@ class MainWindow(QMainWindow):
 
         self.comboLayout = QGridLayout(self.comboGroup)
         self.comboLayout.setColumnStretch(1, 1)
-        self.comboLayout.addWidget(self.labelQtd    , 0, 0)
-        self.comboLayout.addWidget(self.labelItem   , 0, 1)
-        self.comboLayout.addWidget(self.labelPriceU , 0, 2)
-        self.comboLayout.addWidget(self.labelPriceT , 0, 3)
-        self.comboLayout.addWidget(self.editQtd1    , 1, 0)
-        self.comboLayout.addWidget(self.combo1      , 1, 1)
-        self.comboLayout.addWidget(self.labelPriceU1, 1, 2)
-        self.comboLayout.addWidget(self.labelPriceT1, 1, 3)
-        self.comboLayout.addWidget(self.editQtd2    , 2, 0)
-        self.comboLayout.addWidget(self.combo2      , 2, 1)
-        self.comboLayout.addWidget(self.labelPriceU2, 2, 2)
-        self.comboLayout.addWidget(self.labelPriceT2, 2, 3)
-        self.comboLayout.addWidget(self.editQtd3    , 3, 0)
-        self.comboLayout.addWidget(self.combo3      , 3, 1)
-        self.comboLayout.addWidget(self.labelPriceU3, 3, 2)
-        self.comboLayout.addWidget(self.labelPriceT3, 3, 3)
-        self.comboLayout.addWidget(self.editQtd4    , 4, 0)
-        self.comboLayout.addWidget(self.combo4      , 4, 1)
-        self.comboLayout.addWidget(self.labelPriceU4, 4, 2)
-        self.comboLayout.addWidget(self.labelPriceT4, 4, 3)
-        self.comboLayout.addWidget(self.editQtd5    , 5, 0)
-        self.comboLayout.addWidget(self.combo5      , 5, 1)
-        self.comboLayout.addWidget(self.labelPriceU5, 5, 2)
-        self.comboLayout.addWidget(self.labelPriceT5, 5, 3)
-        self.comboLayout.addWidget(self.editQtd6    , 6, 0)
-        self.comboLayout.addWidget(self.combo6      , 6, 1)
-        self.comboLayout.addWidget(self.labelPriceU6, 6, 2)
-        self.comboLayout.addWidget(self.labelPriceT6, 6, 3)
-        self.comboLayout.addWidget(self.editQtd7    , 7, 0)
-        self.comboLayout.addWidget(self.combo7      , 7, 1)
-        self.comboLayout.addWidget(self.labelPriceU7, 7, 2)
-        self.comboLayout.addWidget(self.labelPriceT7, 7, 3)
-        self.comboLayout.addWidget(self.editQtd8    , 8, 0)
-        self.comboLayout.addWidget(self.combo8      , 8, 1)
-        self.comboLayout.addWidget(self.labelPriceU8, 8, 2)
-        self.comboLayout.addWidget(self.labelPriceT8, 8, 3)
+        self.comboLayout.addWidget(self.labelQtd      , 0, 0)
+        self.comboLayout.addWidget(self.labelItem     , 0, 1)
+        self.comboLayout.addWidget(self.labelPriceUStr, 0, 2)
+        self.comboLayout.addWidget(self.labelPriceTStr, 0, 3)
+        for i in range(1,8):
+            self.comboLayout.addWidget(self.editQtd[i]    , i+1, 0)
+            self.comboLayout.addWidget(self.combo[i]      , i+1, 1)
+            self.comboLayout.addWidget(self.labelPriceU[i], i+1, 2)
+            self.comboLayout.addWidget(self.labelPriceT[i], i+1, 3)
 
         self.endLayout = QGridLayout(self.endGroup)
         self.endLayout.addWidget(self.labelDate, 0, 0)
@@ -133,24 +116,32 @@ class MainWindow(QMainWindow):
         self.endLayout.addWidget(self.labelTotal, 0, 2)
         self.endLayout.addWidget(self.buttonConfirm, 1, 2)
 
+    def checkMinimumData(self):
+        if TOTAL > 0 and self.editClient.text() and self.editAddr.text() and self.editPhone.text() and self.editBurgh.text():
+            self.buttonConfirm.setEnabled(True)
+        else:
+            self.buttonConfirm.setEnabled(False)
+
     # CLICK: Confirm order
-    def price1(self):
-        global orderNumber
-        qtd = self.editQtd1.value()
-        if self.combo1.currentText() in tradicionals:
+    def price(self,index):
+        global priceVec, TOTAL
+        qtd = self.editQtd[index].value()
+        if self.combo[index].currentText() in tradicionals:
             price = 20
-        elif self.combo1.currentText() in specials:
+        elif self.combo[index].currentText() in specials:
             price = 25
-        elif self.combo1.currentText() in premiums:
+        elif self.combo[index].currentText() in premiums:
             price = 30
         else:
             price = 0
-        self.labelPriceU1.setText('R$ '+str(price)+',00')
-        self.labelPriceT1.setText('R$ '+str(price*qtd)+',00')
 
+        priceVec[index] = price*qtd;
+        self.labelPriceU[index].setText('R$ '+str(price)+',00')
+        self.labelPriceT[index].setText('R$ '+str(priceVec[index])+',00')
 
-
-
+        TOTAL = sum(priceVec)
+        self.labelTotal.setText('Valor Total = R$ '+str(TOTAL)+',00')
+        self.checkMinimumData()
 
 
     def confirmClick(self):
@@ -164,7 +155,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setStyle("fusion")
     form = MainWindow()
-    form.setWindowTitle('Editor de Nuvem de Pontos')
+    form.setWindowTitle('Orçamento: Já chegou!')
     form.setGeometry(100, 100, 500, 500)
     form.show()
     sys.exit(app.exec_())

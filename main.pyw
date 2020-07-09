@@ -14,24 +14,32 @@ priceVec     = [0,0,0,0,0,0,0,0]
 TOTALpizza   = 0
 TOTALdeliver = 0
 TOTAL        = 0
-menuList     = ['','Calabresa','Frango','Frango com catupiry','Margerita','Mista','Mussarela','Pepperoni', 'Portuguesa']
+menuPizza    = ['Calabresa','Frango','Frango com catupiry','Margerita','Mista','Mussarela','Pepperoni', 'Portuguesa']
 tradicionals = ['Calabresa', 'Frango', 'Margerita', 'Mista', 'Mussarela']
 specials     = ['Frango com catupiry', 'Portuguesa']
 premiums     = ['Pepperoni']
-pizzaPrice   = [20,25,30]
+menuDrink    = ['Coca-cola', 'Guaraná antártica','Suco de acerola','Suco de goiaba']
+menuList     = menuPizza+menuDrink; menuList.sort(); menuList = ['']+menuList
+menuHalf     = ['']+menuPizza
+pizzaPrice   = [19.99, 24.99, 29.99]
+drinkPrice   = [7.99, 5.99, 4.99, 5.99]
 maxOrder     = 7
 
-if not os.path.exists('/media/adriano/git/orcamento/Orçamentos/'):
-    os.mkdir('/media/adriano/git/orcamento/Orçamentos/')
-if not os.path.exists('/media/adriano/git/orcamento/Orçamentos/log.txt'):
+rootPath = os.getcwd()
+invoicePath = os.path.join(rootPath,'Orçamentos')
+logPath = os.path.join(invoicePath,'log.txt')
+
+if not os.path.exists(invoicePath):
+    os.mkdir(invoicePath)
+if not os.path.exists(logPath):
     # Create log.txt
-    with open('/media/adriano/git/orcamento/Orçamentos/log.txt', 'w') as writer:
+    with open(logPath, 'w') as writer:
         writer.write('Relatório de faturamento\n')
         writer.write('------------------------')
         writer.close()
 else:
     # Refresh order number
-    with open('/media/adriano/git/orcamento/Orçamentos/log.txt', 'r') as reader:
+    with open(logPath, 'r') as reader:
         orderNumber
         text = reader.read().split('#')[1::]
         orderNumber = len(text)+1
@@ -83,11 +91,12 @@ class MainWindow(QMainWindow):
             self.combo2[i] = QComboBox()
             self.editQtd[i] = QSpinBox()
             self.combo[i].insertItems(0, menuList)
-            self.combo2[i].insertItems(0, menuList)
+            self.combo2[i].insertItems(0, menuHalf)
             self.combo2[i].setEnabled(False)
             self.editQtd[i].setMaximumWidth(50)
-        self.labelDeliver = QLabel("Entrega: ")
-        self.editDeliver  = QLineEdit()
+        self.labelDeliver  = QLabel("Entrega: ")
+        self.editDeliver   = QLineEdit()
+        self.labelSubTotal = QLabel("R$ {0:.2f}".format(TOTALpizza))
 
         self.labelQtd = QLabel("Qtd."); self.labelItem = QLabel("Item"); self.labelItem2 = QLabel("Metade"); self.labelPriceUStr = QLabel("Preço uni."); self.labelPriceTStr = QLabel("Preço total")
 
@@ -157,6 +166,7 @@ class MainWindow(QMainWindow):
             self.comboLayout.addWidget(self.labelPriceT[i], i+1, 4)
         self.comboLayout.addWidget(self.labelDeliver,maxOrder+1,0)
         self.comboLayout.addWidget(self.editDeliver,maxOrder+1,1)
+        self.comboLayout.addWidget(self.labelSubTotal,maxOrder+1,4)
 
         self.endLayout = QGridLayout(self.endGroup)
         self.endLayout.addWidget(self.labelDate    , 0, 0)
@@ -183,8 +193,10 @@ class MainWindow(QMainWindow):
 
     def price(self, index):
         global priceVec
+        self.nonZeroQtd(index)
         qtd = self.editQtd[index].value()
         if not self.combo2[index].currentText():
+            # If combo2 empty
             if self.combo[index].currentText() in tradicionals:
                 itemPrice = pizzaPrice[0]
                 self.combo2[index].setEnabled(True)
@@ -194,18 +206,36 @@ class MainWindow(QMainWindow):
             elif self.combo[index].currentText() in premiums:
                 itemPrice = pizzaPrice[2]
                 self.combo2[index].setEnabled(True)
+            elif self.combo[index].currentText() in menuDrink:
+                for i in range(0,len(menuDrink)):
+                    if self.combo[index].currentText() == menuDrink[i]:
+                        itemPrice = drinkPrice[i]
+                        break
+                self.combo2[index].setCurrentIndex(0)
+                self.combo2[index].setEnabled(False)
             else:
                 itemPrice = 0
+                self.combo2[index].setCurrentIndex(0)
                 self.combo2[index].setEnabled(False)
         else:
+            #if combo2 exists
             if self.combo[index].currentText() in tradicionals:
                 itemPrice1 = pizzaPrice[0]
             elif self.combo[index].currentText() in specials:
                 itemPrice1 = pizzaPrice[1]
             elif self.combo[index].currentText() in premiums:
                 itemPrice1 = pizzaPrice[2]
+            elif self.combo[index].currentText() in menuDrink:
+                for i in range(0,len(menuDrink)):
+                    if self.combo[index].currentText() == menuDrink[i]:
+                        itemPrice1 = drinkPrice[i]*2
+                        break
+                self.combo2[index].setCurrentIndex(0)
+                self.combo2[index].setEnabled(False)
             else:
                 itemPrice1 = 0
+                self.combo2[index].setCurrentIndex(0)
+                self.combo2[index].setEnabled(False)
 
             if self.combo2[index].currentText() in tradicionals:
                 itemPrice2 = pizzaPrice[0]
@@ -227,6 +257,15 @@ class MainWindow(QMainWindow):
         # self.labelTotal.setText('Valor Total = R$ {0:.2f}'.format(TOTAL))
         # self.checkMinimumData()
     
+    def nonZeroQtd(self,index):
+        qtd = self.editQtd[index].value()
+        if qtd == 0 and self.combo[index].currentText():
+            self.editQtd[index].setValue(1)
+        else:
+            if not self.combo[index].currentText():
+                self.editQtd[index].setValue(0)
+
+
     def priceDeliver(self):
         global TOTAL, TOTALpizza, TOTALdeliver
         deliverStr = self.editDeliver.text()
@@ -244,6 +283,7 @@ class MainWindow(QMainWindow):
         TOTALdeliver = deliver
         TOTAL = TOTALpizza + TOTALdeliver
         self.labelTotal.setText('Valor Total = R$ {0:.2f}'.format(TOTAL))
+        self.labelSubTotal.setText("R$ {0:.2f}".format(TOTALpizza))
         self.checkMinimumData()
 
     # CLICK: Confirm order
@@ -324,25 +364,32 @@ class MainWindow(QMainWindow):
             dataIn = dataIn.replace('Pedido n#','Pedido n\#')
             replacer.close()
 
-        invoiceFileName = date.today().strftime("%Y-%m-%d--"+str(orderNumber)+'-'+client.split()[0])
-        with open('/media/adriano/git/orcamento/Orçamentos/'+invoiceFileName+'.tex', 'w') as writer:
+        invoiceName = date.today().strftime("%Y-%m-%d--"+str(orderNumber)+'-'+client.split()[0])
+        invoiceTex = invoiceName+'.tex'
+        invoiceAux = invoiceName+'.aux'
+        invoiceLog = invoiceName+'.log'
+        invoiceTexPath = os.path.join(invoicePath,invoiceTex)
+        invoiceAuxPath = os.path.join(invoicePath,invoiceAux)
+        invoiceLogPath = os.path.join(invoicePath,invoiceLog)
+        with open(invoiceTexPath, 'w') as writer:
             for i in range(len(dataIn)):
                 writer.write(dataIn[i])
             writer.close()
 
-        os.system('pdflatex -output-directory=\'/media/adriano/git/orcamento/Orçamentos\' /media/adriano/git/orcamento/Orçamentos/'+invoiceFileName+'.tex')
-        os.remove('/media/adriano/git/orcamento/Orçamentos/'+invoiceFileName+'.aux')
-        os.remove('/media/adriano/git/orcamento/Orçamentos/'+invoiceFileName+'.log')
-        os.remove('/media/adriano/git/orcamento/Orçamentos/'+invoiceFileName+'.tex')
+        print(os.environ.get("_MEIPASS2"))
+        os.system('xelatex -output-directory=\''+invoicePath+'\' '+invoiceTexPath)
+        os.remove(invoiceAuxPath)
+        os.remove(invoiceLogPath)
+        os.remove(invoiceTexPath)
 
-        with open('/media/adriano/git/orcamento/Orçamentos/log.txt', 'a') as appender:
+        with open(logPath, 'a') as appender:
             appender.write("\n\n"+self.labelOrder.text())
             appender.write(date.today().strftime(" \n%d/%B %Y\n"))
             appender.write('Pizzaria R$ {0:.2f}'.format(TOTAL)+'\n')
             appender.write('Entrega R$ {0:.2f}'.format(deliver)+'\n')
             appender.close()
 
-        with open('/media/adriano/git/orcamento/Orçamentos/log.txt', 'r') as reader:
+        with open(logPath, 'r') as reader:
             text = reader.read()
             pizza = text.split('Pizzaria R$ ')[1::]
             N = len(pizza)
@@ -352,7 +399,7 @@ class MainWindow(QMainWindow):
             profitTotal = sum(profit)
             reader.close()
 
-        with open('/media/adriano/git/orcamento/Orçamentos/log.txt', 'a') as appender:
+        with open(logPath, 'a') as appender:
             appender.write("Acumulado R$ {0:.2f}".format(profitTotal)+'\n')
             appender.close()
 

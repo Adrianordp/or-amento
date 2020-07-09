@@ -11,6 +11,8 @@ from PySide2.QtCore import QObject, SIGNAL
 
 orderNumber  = 1
 priceVec     = [0,0,0,0,0,0,0,0]
+TOTALpizza   = 0
+TOTALdeliver = 0
 TOTAL        = 0
 menuList     = ['','Calabresa','Frango','Frango com catupiry','Margerita','Mista','Mussarela','Pepperoni', 'Portuguesa']
 tradicionals = ['Calabresa', 'Frango', 'Margerita', 'Mista', 'Mussarela']
@@ -84,6 +86,8 @@ class MainWindow(QMainWindow):
             self.combo2[i].insertItems(0, menuList)
             self.combo2[i].setEnabled(False)
             self.editQtd[i].setMaximumWidth(50)
+        self.labelDeliver = QLabel("Entrega: ")
+        self.editDeliver  = QLineEdit()
 
         self.labelQtd = QLabel("Qtd."); self.labelItem = QLabel("Item"); self.labelItem2 = QLabel("Metade"); self.labelPriceUStr = QLabel("Preço uni."); self.labelPriceTStr = QLabel("Preço total")
 
@@ -119,6 +123,8 @@ class MainWindow(QMainWindow):
         self.buttonConfirm.clicked.connect(self.confirmClick)
         self.buttonConfirm.setEnabled(False)
 
+        self.editDeliver.textChanged.connect(self.priceDeliver)
+
         self.infoLayout = QGridLayout(self.infoGroup)
         self.infoLayout.addWidget(self.labelClient , 0, 0)
         self.infoLayout.addWidget(self.editClient  , 0, 1)
@@ -149,6 +155,8 @@ class MainWindow(QMainWindow):
             self.comboLayout.addWidget(self.editQtd[i]    , i+1, 2)
             self.comboLayout.addWidget(self.labelPriceU[i], i+1, 3)
             self.comboLayout.addWidget(self.labelPriceT[i], i+1, 4)
+        self.comboLayout.addWidget(self.labelDeliver,maxOrder+1,0)
+        self.comboLayout.addWidget(self.editDeliver,maxOrder+1,1)
 
         self.endLayout = QGridLayout(self.endGroup)
         self.endLayout.addWidget(self.labelDate    , 0, 0)
@@ -174,7 +182,7 @@ class MainWindow(QMainWindow):
             self.buttonConfirm.setEnabled(False)
 
     def price(self, index):
-        global priceVec, TOTAL
+        global priceVec
         qtd = self.editQtd[index].value()
         if not self.combo2[index].currentText():
             if self.combo[index].currentText() in tradicionals:
@@ -214,7 +222,27 @@ class MainWindow(QMainWindow):
         self.labelPriceU[index].setText('R$ {0:.2f}'.format(itemPrice))
         self.labelPriceT[index].setText('R$ {0:.2f}'.format(priceVec[index]))
 
-        TOTAL = sum(priceVec)
+        self.priceDeliver()
+        # TOTAL = sum(priceVec)
+        # self.labelTotal.setText('Valor Total = R$ {0:.2f}'.format(TOTAL))
+        # self.checkMinimumData()
+    
+    def priceDeliver(self):
+        global TOTAL, TOTALpizza, TOTALdeliver
+        deliverStr = self.editDeliver.text()
+        try:
+            deliver = float(deliverStr)
+        except:
+            deliverStr = deliverStr.replace(',','.')
+            try:
+                deliver = float(deliverStr)
+                self.editDeliver.setText(deliverStr)
+            except:
+                deliver = 0.0
+        
+        TOTALpizza   = sum(priceVec)
+        TOTALdeliver = deliver
+        TOTAL = TOTALpizza + TOTALdeliver
         self.labelTotal.setText('Valor Total = R$ {0:.2f}'.format(TOTAL))
         self.checkMinimumData()
 
@@ -229,8 +257,6 @@ class MainWindow(QMainWindow):
         allergy = self.editAllergy.text()
         ref     = self.editRef.text()
         obs     = self.editObs.text()
-        deliver = "10.00"
-        self.deliver = deliver
         item    = [None]*maxOrder
         itemm   = [None]*maxOrder
         qtd     = [None]*maxOrder
@@ -250,6 +276,12 @@ class MainWindow(QMainWindow):
                 uni[i] = ''
             if tot[i] == '0.00':
                 tot[i] = ''
+        deliver = self.editDeliver.text()
+        try:
+            deliver = float(deliver)
+        except:
+            deliver = 0.0
+
         orderStr = "Pedido n#"+str(orderNumber)
         self.labelOrder.setText(orderStr)
 
@@ -284,8 +316,9 @@ class MainWindow(QMainWindow):
             dataIn = dataIn.replace('@valor5U',uni[4]); dataIn = dataIn.replace('@valor5T',tot[4])
             dataIn = dataIn.replace('@valor6U',uni[5]); dataIn = dataIn.replace('@valor6T',tot[5])
             dataIn = dataIn.replace('@valor7U',uni[6]); dataIn = dataIn.replace('@valor7T',tot[6])
-            dataIn = dataIn.replace('@entrega',deliver)
-            dataIn = dataIn.replace('@valorT','{0:.2f}'.format(TOTAL))
+            dataIn = dataIn.replace('@entrega','{0:.2f}'.format(TOTALdeliver))
+            dataIn = dataIn.replace('@valorT','{0:.2f}'.format(TOTALpizza))
+            dataIn = dataIn.replace('@TOTAL','{0:.2f}'.format(TOTAL))
             dataIn = dataIn.replace('@pedido',orderStr)
             dataIn = dataIn.replace('R$','R\$')
             dataIn = dataIn.replace('Pedido n#','Pedido n\#')
@@ -306,7 +339,7 @@ class MainWindow(QMainWindow):
             appender.write("\n\n"+self.labelOrder.text())
             appender.write(date.today().strftime(" \n%d/%B %Y\n"))
             appender.write('Pizzaria R$ {0:.2f}'.format(TOTAL)+'\n')
-            appender.write('Entrega R$ '+deliver+'\n')
+            appender.write('Entrega R$ {0:.2f}'.format(deliver)+'\n')
             appender.close()
 
         with open('/media/adriano/git/orcamento/Orçamentos/log.txt', 'r') as reader:

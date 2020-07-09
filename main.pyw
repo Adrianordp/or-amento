@@ -3,11 +3,17 @@ import sys
 import os
 import shutil
 from datetime import date
-from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox
-from PySide2.QtCore import QObject, SIGNAL
-#from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox
-#from PySide2.QtCore import QObject, SIGNAL
-# sfrom PySide2.QtGui import *
+import PySide2
+import PyQt5
+#import PySide2.QtWidgets
+#import PySide2.QtCore
+#import PySide2.QtGui
+#import PySide2.QtWidgets
+from PyQt5.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox
+#from PyQt5.QtCore import QObject, SIGNAL
+# from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox
+# from PySide2.QtCore import QObject, SIGNAL
+from PySide2.QtGui import *
 
 orderNumber  = 1
 priceVec     = [0,0,0,0,0,0,0,0]
@@ -325,7 +331,8 @@ class MainWindow(QMainWindow):
         orderStr = "Pedido n#"+str(orderNumber)
         self.labelOrder.setText(orderStr)
 
-        with open('/media/adriano/git/orcamento/template.tex') as replacer:
+        templatePath = os.path.join(rootPath,'template.tex')
+        with open(templatePath) as replacer:
             dataIn = replacer.read()
             dataIn = dataIn.replace('@data',today)
             dataIn = dataIn.replace('@cliente',client)
@@ -368,16 +375,21 @@ class MainWindow(QMainWindow):
         invoiceTex = invoiceName+'.tex'
         invoiceAux = invoiceName+'.aux'
         invoiceLog = invoiceName+'.log'
+        invoicePdf = invoiceName+'.pdf'
         invoiceTexPath = os.path.join(invoicePath,invoiceTex)
-        invoiceAuxPath = os.path.join(invoicePath,invoiceAux)
-        invoiceLogPath = os.path.join(invoicePath,invoiceLog)
+        invoicePDFPath = os.path.join(invoicePath,invoicePdf)
+        invoicePdfPath = os.path.join(rootPath,invoicePdf)
+        invoiceAuxPath = os.path.join(rootPath,invoiceAux)
+        invoiceLogPath = os.path.join(rootPath,invoiceLog)
         with open(invoiceTexPath, 'w') as writer:
             for i in range(len(dataIn)):
                 writer.write(dataIn[i])
             writer.close()
 
-        print(os.environ.get("_MEIPASS2"))
-        os.system('xelatex -output-directory=\''+invoicePath+'\' '+invoiceTexPath)
+        #print(os.environ.get("_MEIPASS2"))
+        #os.system('xelatex -output-directory=\''+invoicePath+'\' '+invoiceTexPath)
+        os.system('xelatex '+invoiceTexPath)
+        os.rename(invoicePdfPath,invoicePDFPath)
         os.remove(invoiceAuxPath)
         os.remove(invoiceLogPath)
         os.remove(invoiceTexPath)

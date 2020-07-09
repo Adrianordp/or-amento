@@ -1,0 +1,44 @@
+\documentclass{article}
+% \usepackage[a6paper, total={105mm, 148mm}]{geometry}
+\usepackage[a6paper,left=3mm,right=3mm,top=5mm,bottom=5mm]{geometry}
+\usepackage{tabularx}
+\def \tab {\hspace*{4ex}}
+\begin{document}
+%---------------------------------------------------------------
+%	HEADING SECTION
+%---------------------------------------------------------------
+
+\hfil{\large \bf Já Chegou!}\hfil % Company providing the invoice
+\bigskip\break % Whitespace
+\hrule % Horizontal line
+
+\noindent Centro \hfill (85) 9.9806-1232 \\ % Your address and contact information
+Caucaia-CE \hfill @jachegoupizza
+\\ \\
+
+{\bf \noindent Cliente:} @cliente \\ % 
+\noindent \tab Telefone: @telefone \\ % 
+\tab Endereço: @endereco \\
+\tab Bairro: @bairro \\
+\tab Referência: @referencia \\
+\tab Alergia: @alergia \\
+\tab Obs.: @obs\\
+
+\begin{table}[!h]
+    \centering
+    \begin{tabularx}{\textwidth}{Xccc}
+    \hline \textbf{Delivery\hfill} & \textbf{Qtd} & \textbf{P.U.} & \textbf{P.T.} \\
+    \hline  \textbf{Pedido}     &       &          & \textbf{@valorT}  \\
+            @produto1@produtom1 & @qtd1 & @valor1U & @valor1T \\
+            @produto2@produtom2 & @qtd2 & @valor2U & @valor2T \\
+            @produto3@produtom3 & @qtd3 & @valor3U & @valor3T \\
+            @produto4@produtom4 & @qtd4 & @valor4U & @valor4T \\
+            @produto5@produtom5 & @qtd5 & @valor5U & @valor5T \\
+            @produto6@produtom6 & @qtd6 & @valor6U & @valor6T \\
+            @produto7@produtom7 & @qtd7 & @valor7U & @valor7T \\
+            \textbf{Entrega}    &       &          & \textbf{@entrega} \\ \hline
+    \end{tabularx}
+\end{table}
+\hfill{TOTAL R\$ \underline{\hspace{50pt}}}
+\vfill {\noindent \bf Data:} @data \hfill @pedido
+\end{document}

@@ -4,15 +4,7 @@ import os
 import shutil
 from datetime import date
 import PySide2
-import PyQt5
-#import PySide2.QtWidgets
-#import PySide2.QtCore
-#import PySide2.QtGui
-#import PySide2.QtWidgets
-from PyQt5.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox
-#from PyQt5.QtCore import QObject, SIGNAL
-# from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox
-# from PySide2.QtCore import QObject, SIGNAL
+from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox
 from PySide2.QtGui import *
 
 orderNumber  = 1
@@ -388,7 +380,8 @@ class MainWindow(QMainWindow):
 
         #print(os.environ.get("_MEIPASS2"))
         #os.system('xelatex -output-directory=\''+invoicePath+'\' '+invoiceTexPath)
-        os.system('xelatex '+invoiceTexPath)
+        #os.system('C:\\Users\\adria\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\xelatex.exe '+invoiceTexPath)
+        os.system('xelatex.exe '+invoiceTexPath)
         os.rename(invoicePdfPath,invoicePDFPath)
         os.remove(invoiceAuxPath)
         os.remove(invoiceLogPath)

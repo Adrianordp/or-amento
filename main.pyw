@@ -5,6 +5,7 @@ import shutil
 import platform
 from datetime import date
 import PySide2
+#import PyQt5
 from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox, QMessageBox
 from PySide2.QtGui import *
 
@@ -341,7 +342,7 @@ class MainWindow(QMainWindow):
             self.labelOrder.setText(orderStr)
     
             templatePath = os.path.join(rootPath,'template.tex')
-            with open(templatePath) as replacer:
+            with open(templatePath,encoding='utf-8') as replacer:
                 dataIn = replacer.read()
                 dataIn = dataIn.replace('@data',today)
                 dataIn = dataIn.replace('@cliente',client)
@@ -390,9 +391,8 @@ class MainWindow(QMainWindow):
             invoicePdfPath = os.path.join(rootPath,invoicePdf)
             invoiceAuxPath = os.path.join(rootPath,invoiceAux)
             invoiceLogPath = os.path.join(rootPath,invoiceLog)
-            with open(invoiceTexPath, 'w') as writer:
-                for i in range(len(dataIn)):
-                    writer.write(dataIn[i])
+            with open(invoiceTexPath, 'w',encoding='utf-8') as writer:
+                writer.write(dataIn)
                 writer.close()
     
             #print(os.environ.get("_MEIPASS2"))

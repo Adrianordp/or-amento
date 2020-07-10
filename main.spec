@@ -4,14 +4,9 @@ block_cipher = None
 
 
 a = Analysis(['main.pyw'],
-             pathex=['C:\\Users\\adria\\Documents\\orcamento'],
+             pathex=['C:\\Users\\adria\\git\\orcamento'],
              binaries=[],
-             datas=[	('template.tex','.'),
-		    	('xelatex.exe','.'),
-			('fontawesome.sty','.'),
-			('fontawesomesymbols-generic.tex','.'),
-			('fontawesomesymbols-pdftex.tex','.'),
-			('fontawesomesymbols-xeluatex.tex','.')],
+             datas=[],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],

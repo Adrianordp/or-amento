@@ -2,12 +2,11 @@
 import sys
 import os
 import shutil
+import platform
 from datetime import date
-from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox
-from PySide2.QtCore import QObject, SIGNAL
-#from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox
-#from PySide2.QtCore import QObject, SIGNAL
-# sfrom PySide2.QtGui import *
+import PySide2
+from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox, QMessageBox
+from PySide2.QtGui import *
 
 orderNumber  = 1
 priceVec     = [0,0,0,0,0,0,0,0]
@@ -24,6 +23,9 @@ menuHalf     = ['']+menuPizza
 pizzaPrice   = [19.99, 24.99, 29.99]
 drinkPrice   = [7.99, 5.99, 4.99, 5.99]
 maxOrder     = 7
+osName       = platform.system()
+
+flagConfirm = False
 
 rootPath = os.getcwd()
 invoicePath = os.path.join(rootPath,'Orçamentos')
@@ -175,14 +177,14 @@ class MainWindow(QMainWindow):
         self.endLayout.addWidget(self.buttonConfirm, 1, 2)
 
 ############################################## APAGAR
-        self.editClient.setText('Adriano Rodrigues')
-        self.editAddr.setText('Av. Engenheiro Alberto Sá, 153, apt 301')
-        self.editPhone.setText('(85) 9.9404-2131')
-        self.editBurgh.setText('Vicente Pinzon')
-        self.editRef.setText('Em frente ao posto shell. Cruzamento com Eng. Santana Jr.')
-        self.combo[0].setCurrentIndex(1)
-        self.combo2[0].setCurrentIndex(2)
-        self.editQtd[0].setValue(2)
+#        self.editClient.setText('áéóçãÁÉÓÇÃ')
+#        self.editAddr.setText('AáéóçãÁÉÓÇ')
+#        self.editPhone.setText('(85) 9.9404-2131')
+#        self.editBurgh.setText('AáéóçãÁÉÓÇ')
+#        self.editRef.setText('AáéóçãÁÉÓÇ')
+#        self.combo[0].setCurrentIndex(1)
+#        self.combo2[0].setCurrentIndex(2)
+#        self.editQtd[0].setValue(2)
 ##############################################
 
     def checkMinimumData(self):
@@ -253,9 +255,6 @@ class MainWindow(QMainWindow):
         self.labelPriceT[index].setText('R$ {0:.2f}'.format(priceVec[index]))
 
         self.priceDeliver()
-        # TOTAL = sum(priceVec)
-        # self.labelTotal.setText('Valor Total = R$ {0:.2f}'.format(TOTAL))
-        # self.checkMinimumData()
     
     def nonZeroQtd(self,index):
         qtd = self.editQtd[index].value()
@@ -286,126 +285,167 @@ class MainWindow(QMainWindow):
         self.labelSubTotal.setText("R$ {0:.2f}".format(TOTALpizza))
         self.checkMinimumData()
 
+    def msgbtn(self,i):
+        global flagConfirm
+        if i.text() == "OK" or i.text() == "&OK":
+            flagConfirm = True
+        else:
+            flagConfirm = False
+
     # CLICK: Confirm order
     def confirmClick(self):
-        global orderNumber
-        today   = self.date
-        client  = self.editClient.text()
-        phone   = self.editPhone.text()
-        addr    = self.editAddr.text()
-        burgh   = self.editBurgh.text()
-        allergy = self.editAllergy.text()
-        ref     = self.editRef.text()
-        obs     = self.editObs.text()
-        item    = [None]*maxOrder
-        itemm   = [None]*maxOrder
-        qtd     = [None]*maxOrder
-        uni     = [None]*maxOrder
-        tot     = [None]*maxOrder
-        for i in range(0,maxOrder):
-            item[i]   = self.combo[i].currentText()
-            itemm[i]  = self.combo2[i].currentText()
-            qtd[i]    = self.editQtd[i].text()
-            uni[i]    = self.labelPriceU[i].text()[3::]
-            tot[i]    = self.labelPriceT[i].text()[3::]
-            if itemm[i]:
-                itemm[i] = ' / '+itemm[i]
-            if qtd[i] == '0':
-                qtd[i] = ''
-            if uni[i] == '0.00':
-                uni[i] = ''
-            if tot[i] == '0.00':
-                tot[i] = ''
-        deliver = self.editDeliver.text()
-        try:
-            deliver = float(deliver)
-        except:
-            deliver = 0.0
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setText("O pediro será salvo um PDF na pasta Orçamentos e um novo pedido pode ser realizado.")
+        msg.setInformativeText("Revise os dados e clique em Ok se estiver tudo correto")
+        msg.setWindowTitle("Confirmar pedido?")
+        msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        msg.buttonClicked.connect(self.msgbtn)
+        msg.exec_()
+        if flagConfirm:
+            global orderNumber
+            today   = self.date
+            client  = self.editClient.text()
+            phone   = self.editPhone.text()
+            addr    = self.editAddr.text()
+            burgh   = self.editBurgh.text()
+            allergy = self.editAllergy.text()
+            ref     = self.editRef.text()
+            obs     = self.editObs.text()
+            item    = [None]*maxOrder
+            itemm   = [None]*maxOrder
+            qtd     = [None]*maxOrder
+            uni     = [None]*maxOrder
+            tot     = [None]*maxOrder
+            for i in range(0,maxOrder):
+                item[i]   = self.combo[i].currentText()
+                itemm[i]  = self.combo2[i].currentText()
+                qtd[i]    = self.editQtd[i].text()
+                uni[i]    = self.labelPriceU[i].text()[3::]
+                tot[i]    = self.labelPriceT[i].text()[3::]
+                if itemm[i]:
+                    itemm[i] = ' / '+itemm[i]
+                if qtd[i] == '0':
+                    qtd[i] = ''
+                if uni[i] == '0.00':
+                    uni[i] = ''
+                if tot[i] == '0.00':
+                    tot[i] = ''
+            deliver = self.editDeliver.text()
+            try:
+                deliver = float(deliver)
+            except:
+                deliver = 0.0
+    
+            orderStr = "Pedido n#"+str(orderNumber)
+            self.labelOrder.setText(orderStr)
+    
+            templatePath = os.path.join(rootPath,'template.tex')
+            with open(templatePath) as replacer:
+                dataIn = replacer.read()
+                dataIn = dataIn.replace('@data',today)
+                dataIn = dataIn.replace('@cliente',client)
+                dataIn = dataIn.replace('@telefone',phone)
+                dataIn = dataIn.replace('@endereco',addr)
+                dataIn = dataIn.replace('@bairro',burgh)
+                dataIn = dataIn.replace('@referencia',ref)
+                dataIn = dataIn.replace('@alergia',allergy)
+                dataIn = dataIn.replace('@obs',obs)
+                dataIn = dataIn.replace('@produto1',item[0]); dataIn = dataIn.replace('@produtom1',itemm[0])
+                dataIn = dataIn.replace('@produto2',item[1]); dataIn = dataIn.replace('@produtom2',itemm[1])
+                dataIn = dataIn.replace('@produto3',item[2]); dataIn = dataIn.replace('@produtom3',itemm[2])
+                dataIn = dataIn.replace('@produto4',item[3]); dataIn = dataIn.replace('@produtom4',itemm[3])
+                dataIn = dataIn.replace('@produto5',item[4]); dataIn = dataIn.replace('@produtom5',itemm[4])
+                dataIn = dataIn.replace('@produto6',item[5]); dataIn = dataIn.replace('@produtom6',itemm[5])
+                dataIn = dataIn.replace('@produto7',item[6]); dataIn = dataIn.replace('@produtom7',itemm[6])
+                dataIn = dataIn.replace('@qtd1',qtd[0])
+                dataIn = dataIn.replace('@qtd2',qtd[1])
+                dataIn = dataIn.replace('@qtd3',qtd[2])
+                dataIn = dataIn.replace('@qtd4',qtd[3])
+                dataIn = dataIn.replace('@qtd5',qtd[4])
+                dataIn = dataIn.replace('@qtd6',qtd[5])
+                dataIn = dataIn.replace('@qtd7',qtd[6])
+                dataIn = dataIn.replace('@valor1U',uni[0]); dataIn = dataIn.replace('@valor1T',tot[0])
+                dataIn = dataIn.replace('@valor2U',uni[1]); dataIn = dataIn.replace('@valor2T',tot[1])
+                dataIn = dataIn.replace('@valor3U',uni[2]); dataIn = dataIn.replace('@valor3T',tot[2])
+                dataIn = dataIn.replace('@valor4U',uni[3]); dataIn = dataIn.replace('@valor4T',tot[3])
+                dataIn = dataIn.replace('@valor5U',uni[4]); dataIn = dataIn.replace('@valor5T',tot[4])
+                dataIn = dataIn.replace('@valor6U',uni[5]); dataIn = dataIn.replace('@valor6T',tot[5])
+                dataIn = dataIn.replace('@valor7U',uni[6]); dataIn = dataIn.replace('@valor7T',tot[6])
+                dataIn = dataIn.replace('@entrega','{0:.2f}'.format(TOTALdeliver))
+                dataIn = dataIn.replace('@valorT','{0:.2f}'.format(TOTALpizza))
+                dataIn = dataIn.replace('@TOTAL','{0:.2f}'.format(TOTAL))
+                dataIn = dataIn.replace('@pedido',orderStr)
+                dataIn = dataIn.replace('R$','R\$')
+                dataIn = dataIn.replace('Pedido n#','Pedido n\#')
+                replacer.close()
+    
+            invoiceName = date.today().strftime("%Y-%m-%d--"+str(orderNumber)+'-'+client.split()[0])
+            invoiceTex = invoiceName+'.tex'
+            invoiceAux = invoiceName+'.aux'
+            invoiceLog = invoiceName+'.log'
+            invoicePdf = invoiceName+'.pdf'
+            invoiceTexPath = os.path.join(invoicePath,invoiceTex)
+            invoicePDFPath = os.path.join(invoicePath,invoicePdf)
+            invoicePdfPath = os.path.join(rootPath,invoicePdf)
+            invoiceAuxPath = os.path.join(rootPath,invoiceAux)
+            invoiceLogPath = os.path.join(rootPath,invoiceLog)
+            with open(invoiceTexPath, 'w') as writer:
+                for i in range(len(dataIn)):
+                    writer.write(dataIn[i])
+                writer.close()
+    
+            #print(os.environ.get("_MEIPASS2"))
+            #os.system('xelatex -output-directory=\''+invoicePath+'\' '+invoiceTexPath)
+            #os.system('C:\\Users\\adria\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\xelatex.exe '+invoiceTexPath)
+            if osName == "Linux":
+                os.system('xelatex '+invoiceTexPath)
+            else:
+                os.system('xelatex.exe '+invoiceTexPath)
+            os.rename(invoicePdfPath,invoicePDFPath)
+            os.remove(invoiceAuxPath)
+            os.remove(invoiceLogPath)
+            os.remove(invoiceTexPath)
+    
+            with open(logPath, 'a') as appender:
+                appender.write("\n\n"+self.labelOrder.text())
+                appender.write(date.today().strftime(" \n%d/%B %Y\n"))
+                appender.write('Pizzaria R$ {0:.2f}'.format(TOTAL)+'\n')
+                appender.write('Entrega R$ {0:.2f}'.format(deliver)+'\n')
+                appender.close()
+    
+            with open(logPath, 'r') as reader:
+                text = reader.read()
+                pizza = text.split('Pizzaria R$ ')[1::]
+                N = len(pizza)
+                profit = [None]*N
+                for i in range(0,N):
+                    profit[i] = float(pizza[i].split('\n')[0])
+                profitTotal = sum(profit)
+                reader.close()
+    
+            with open(logPath, 'a') as appender:
+                appender.write("Acumulado R$ {0:.2f}".format(profitTotal)+'\n')
+                appender.close()
+            
+            self.clearData()
+    
+            orderNumber += 1
+            orderStr = "Pedido n#"+str(orderNumber)
+            self.labelOrder.setText(orderStr)
 
-        orderStr = "Pedido n#"+str(orderNumber)
-        self.labelOrder.setText(orderStr)
-
-        with open('/media/adriano/git/orcamento/template.tex') as replacer:
-            dataIn = replacer.read()
-            dataIn = dataIn.replace('@data',today)
-            dataIn = dataIn.replace('@cliente',client)
-            dataIn = dataIn.replace('@telefone',phone)
-            dataIn = dataIn.replace('@endereco',addr)
-            dataIn = dataIn.replace('@bairro',burgh)
-            dataIn = dataIn.replace('@referencia',ref)
-            dataIn = dataIn.replace('@alergia',allergy)
-            dataIn = dataIn.replace('@obs',obs)
-            dataIn = dataIn.replace('@produto1',item[0]); dataIn = dataIn.replace('@produtom1',itemm[0])
-            dataIn = dataIn.replace('@produto2',item[1]); dataIn = dataIn.replace('@produtom2',itemm[1])
-            dataIn = dataIn.replace('@produto3',item[2]); dataIn = dataIn.replace('@produtom3',itemm[2])
-            dataIn = dataIn.replace('@produto4',item[3]); dataIn = dataIn.replace('@produtom4',itemm[3])
-            dataIn = dataIn.replace('@produto5',item[4]); dataIn = dataIn.replace('@produtom5',itemm[4])
-            dataIn = dataIn.replace('@produto6',item[5]); dataIn = dataIn.replace('@produtom6',itemm[5])
-            dataIn = dataIn.replace('@produto7',item[6]); dataIn = dataIn.replace('@produtom7',itemm[6])
-            dataIn = dataIn.replace('@qtd1',qtd[0])
-            dataIn = dataIn.replace('@qtd2',qtd[1])
-            dataIn = dataIn.replace('@qtd3',qtd[2])
-            dataIn = dataIn.replace('@qtd4',qtd[3])
-            dataIn = dataIn.replace('@qtd5',qtd[4])
-            dataIn = dataIn.replace('@qtd6',qtd[5])
-            dataIn = dataIn.replace('@qtd7',qtd[6])
-            dataIn = dataIn.replace('@valor1U',uni[0]); dataIn = dataIn.replace('@valor1T',tot[0])
-            dataIn = dataIn.replace('@valor2U',uni[1]); dataIn = dataIn.replace('@valor2T',tot[1])
-            dataIn = dataIn.replace('@valor3U',uni[2]); dataIn = dataIn.replace('@valor3T',tot[2])
-            dataIn = dataIn.replace('@valor4U',uni[3]); dataIn = dataIn.replace('@valor4T',tot[3])
-            dataIn = dataIn.replace('@valor5U',uni[4]); dataIn = dataIn.replace('@valor5T',tot[4])
-            dataIn = dataIn.replace('@valor6U',uni[5]); dataIn = dataIn.replace('@valor6T',tot[5])
-            dataIn = dataIn.replace('@valor7U',uni[6]); dataIn = dataIn.replace('@valor7T',tot[6])
-            dataIn = dataIn.replace('@entrega','{0:.2f}'.format(TOTALdeliver))
-            dataIn = dataIn.replace('@valorT','{0:.2f}'.format(TOTALpizza))
-            dataIn = dataIn.replace('@TOTAL','{0:.2f}'.format(TOTAL))
-            dataIn = dataIn.replace('@pedido',orderStr)
-            dataIn = dataIn.replace('R$','R\$')
-            dataIn = dataIn.replace('Pedido n#','Pedido n\#')
-            replacer.close()
-
-        invoiceName = date.today().strftime("%Y-%m-%d--"+str(orderNumber)+'-'+client.split()[0])
-        invoiceTex = invoiceName+'.tex'
-        invoiceAux = invoiceName+'.aux'
-        invoiceLog = invoiceName+'.log'
-        invoiceTexPath = os.path.join(invoicePath,invoiceTex)
-        invoiceAuxPath = os.path.join(invoicePath,invoiceAux)
-        invoiceLogPath = os.path.join(invoicePath,invoiceLog)
-        with open(invoiceTexPath, 'w') as writer:
-            for i in range(len(dataIn)):
-                writer.write(dataIn[i])
-            writer.close()
-
-        print(os.environ.get("_MEIPASS2"))
-        os.system('xelatex -output-directory=\''+invoicePath+'\' '+invoiceTexPath)
-        os.remove(invoiceAuxPath)
-        os.remove(invoiceLogPath)
-        os.remove(invoiceTexPath)
-
-        with open(logPath, 'a') as appender:
-            appender.write("\n\n"+self.labelOrder.text())
-            appender.write(date.today().strftime(" \n%d/%B %Y\n"))
-            appender.write('Pizzaria R$ {0:.2f}'.format(TOTAL)+'\n')
-            appender.write('Entrega R$ {0:.2f}'.format(deliver)+'\n')
-            appender.close()
-
-        with open(logPath, 'r') as reader:
-            text = reader.read()
-            pizza = text.split('Pizzaria R$ ')[1::]
-            N = len(pizza)
-            profit = [None]*N
-            for i in range(0,N):
-                profit[i] = float(pizza[i].split('\n')[0])
-            profitTotal = sum(profit)
-            reader.close()
-
-        with open(logPath, 'a') as appender:
-            appender.write("Acumulado R$ {0:.2f}".format(profitTotal)+'\n')
-            appender.close()
-
-        orderNumber += 1
-        orderStr = "Pedido n#"+str(orderNumber)
-        self.labelOrder.setText(orderStr)
+    def clearData(self):
+        self.editClient.setText('')
+        self.editAddr.setText('')
+        self.editPhone.setText('')
+        self.editBurgh.setText('')
+        self.editRef.setText('')
+        self.editAllergy.setText('')
+        self.editObs.setText('')
+        for i in range (0,maxOrder):
+            self.combo[i].setCurrentIndex(0)
+            self.combo2[i].setCurrentIndex(0)
+            self.editQtd[i].setValue(0)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

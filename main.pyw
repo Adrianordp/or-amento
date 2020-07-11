@@ -610,7 +610,12 @@ class MainWindow(QMainWindow):
                 dataIn = dataIn.replace('@valorT','{0:.2f}'.format(TOTALpizza))
                 dataIn = dataIn.replace('@TOTAL','{0:.2f}'.format(TOTAL))
                 dataIn = dataIn.replace('@troco','{0:.2f}'.format(abs(CHANGE)))
-                dataIn = dataIn.replace('@dinheiro','{0:.2f}'.format(float(self.editChange.text())))
+                if self.editChange.text():
+                    dataIn = dataIn.replace('@dinheiro','Troco para R$ {0:.2f}'.format())
+                    float(self.editChange.text())
+                else:
+                    dataIn = dataIn.replace('@dinheiro','')
+                dataIn = dataIn.replace('@metodo',self.payMethod)
                 dataIn = dataIn.replace('@pedido',orderStr)
                 dataIn = dataIn.replace('R$','R\$')
                 dataIn = dataIn.replace('Pedido n#','Pedido n\#')

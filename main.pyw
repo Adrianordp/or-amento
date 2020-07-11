@@ -6,17 +6,20 @@ import platform
 from datetime import date
 import PySide2
 #import PyQt5
-from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox, QMessageBox
+from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox, QMessageBox, QCheckBox
 from PySide2.QtGui import *
+
+osName       = platform.system()
 
 orderNumber  = 1
 priceVec     = [0,0,0,0,0,0,0,0]
 TOTALpizza   = 0
 TOTALdeliver = 0
 TOTAL        = 0
-menuPizza    = ['Calabresa','Frango','Frango com catupiry','Margerita','Mista','Mussarela','Pepperoni', 'Portuguesa']
+CHANGE       = 0
+menuPizza    = ['Calabresa','Frango','Frango com cream cheese','Margerita','Mista','Mussarela','Pepperoni', 'Portuguesa']
 tradicionals = ['Calabresa', 'Frango', 'Margerita', 'Mista', 'Mussarela']
-specials     = ['Frango com catupiry', 'Portuguesa']
+specials     = ['Frango com cream cheese', 'Portuguesa']
 premiums     = ['Pepperoni']
 menuDrink    = ['Coca-cola', 'Guaraná antártica','Suco de acerola','Suco de goiaba']
 menuList     = menuPizza+menuDrink; menuList.sort(); menuList = ['']+menuList
@@ -24,7 +27,6 @@ menuHalf     = ['']+menuPizza
 pizzaPrice   = [19.99, 24.99, 29.99]
 drinkPrice   = [7.99, 5.99, 4.99, 5.99]
 maxOrder     = 7
-osName       = platform.system()
 
 flagConfirm = False
 
@@ -59,12 +61,14 @@ class MainWindow(QMainWindow):
         self.mainLayout = QGridLayout(self.mainWidget)
 
         self.infoGroup  = QGroupBox("Dados")
+        self.payGroup   = QGroupBox("Pagamento")
         self.comboGroup = QGroupBox("Pedido")
         self.endGroup   = QGroupBox("Resumo")
 
-        self.mainLayout.addWidget(self.infoGroup, 0, 0)
+        self.mainLayout.addWidget(self.infoGroup,  0, 0)
         self.mainLayout.addWidget(self.comboGroup, 1, 0)
-        self.mainLayout.addWidget(self.endGroup, 2, 0)
+        self.mainLayout.addWidget(self.payGroup,   2, 0)
+        self.mainLayout.addWidget(self.endGroup,   3, 0)
 
         self.setCentralWidget(self.mainWidget)
 
@@ -81,6 +85,39 @@ class MainWindow(QMainWindow):
         self.editPhone.textChanged.connect(self.checkMinimumData)
         self.editAddr.textChanged.connect(self.checkMinimumData)
         self.editBurgh.textChanged.connect(self.checkMinimumData)
+        self.editRef.textChanged.connect(self.checkMinimumData)
+
+        self.payMethod   = ''
+        self.checkMoney  = QCheckBox("Dinheiro")
+        self.checkDebit  = QCheckBox("Débito")
+        self.checkCredit = QCheckBox("Crédito")
+        self.labelChange = QLabel("Troco para:")  ; self.editChange = QLineEdit("")
+        self.labelDebit   = QLabel("No débito:")  ; self.editDebit   = QLineEdit("")
+        self.labelCredit   = QLabel("No crédito:"); self.editCredit   = QLineEdit("")
+        
+        self.editChange.setEnabled(False)
+        self.editChange.setVisible(False)
+        self.labelChange.setVisible(False)
+        self.editDebit.setEnabled(False)
+        self.editDebit.setVisible(False)
+        self.labelDebit.setVisible(False)
+        self.editCredit.setEnabled(False)
+        self.editCredit.setVisible(False)
+        self.labelCredit.setVisible(False)
+
+        self.checkMoney.stateChanged.connect(self.changePayment)
+        self.checkDebit.stateChanged.connect(self.changePayment)
+        self.checkCredit.stateChanged.connect(self.changePayment)
+        self.editChange.textChanged.connect(self.calcChange)
+        self.editDebit.textChanged.connect(self.calcChange)
+        self.editCredit.textChanged.connect(self.calcChange)
+        
+        self.checkMoney.stateChanged.connect(self.checkMinimumData)
+        self.checkDebit.stateChanged.connect(self.checkMinimumData)
+        self.checkCredit.stateChanged.connect(self.checkMinimumData)
+        self.editChange.textChanged.connect(self.checkMinimumData)
+        self.editDebit.textChanged.connect(self.checkMinimumData)
+        self.editCredit.textChanged.connect(self.checkMinimumData)
 
         self.combo  = [None]*maxOrder
         self.combo2 = [None]*maxOrder
@@ -130,7 +167,10 @@ class MainWindow(QMainWindow):
         orderStr = "Pedido n#"+str(orderNumber)
         totalStr = "Valor Total = R$ 0.00"
         self.date = date.today().strftime("%d/%B %Y")
-        self.labelDate = QLabel("Data: "+self.date); self.labelOrder = QLabel(orderStr); self.labelTotal = QLabel(totalStr)
+        self.labelDate  = QLabel("Data: "+self.date)
+        self.labelOrder = QLabel(orderStr)
+        self.labelTotal = QLabel(totalStr)
+        self.labelCalcChange = QLabel(); self.labelCalcChange.setVisible(False)
         self.buttonConfirm = QPushButton("Confirmar pedido")
         self.buttonConfirm.clicked.connect(self.confirmClick)
         self.buttonConfirm.setEnabled(False)
@@ -171,11 +211,23 @@ class MainWindow(QMainWindow):
         self.comboLayout.addWidget(self.editDeliver,maxOrder+1,1)
         self.comboLayout.addWidget(self.labelSubTotal,maxOrder+1,4)
 
+        self.payLayout = QGridLayout(self.payGroup)
+        self.payLayout.addWidget(self.checkMoney , 0, 0)
+        self.payLayout.addWidget(self.checkDebit , 0, 1)
+        self.payLayout.addWidget(self.checkCredit, 0, 2)
+        self.payLayout.addWidget(self.labelChange, 0, 3)
+        self.payLayout.addWidget(self.editChange, 0, 4)
+        self.payLayout.addWidget(self.labelDebit, 0, 5)
+        self.payLayout.addWidget(self.editDebit, 0, 6)
+        self.payLayout.addWidget(self.labelCredit, 0, 7)
+        self.payLayout.addWidget(self.editCredit, 0, 8)
+
         self.endLayout = QGridLayout(self.endGroup)
-        self.endLayout.addWidget(self.labelDate    , 0, 0)
-        self.endLayout.addWidget(self.labelOrder   , 0, 1)
-        self.endLayout.addWidget(self.labelTotal   , 0, 2)
-        self.endLayout.addWidget(self.buttonConfirm, 1, 2)
+        self.endLayout.addWidget(self.labelDate      , 0, 0)
+        self.endLayout.addWidget(self.labelOrder     , 0, 1)
+        self.endLayout.addWidget(self.labelTotal     , 0, 2)
+        self.endLayout.addWidget(self.labelCalcChange, 1, 0)
+        self.endLayout.addWidget(self.buttonConfirm  , 1, 2)
 
 ############################################## APAGAR
 #        self.editClient.setText('áéóçãÁÉÓÇÃ')
@@ -188,9 +240,190 @@ class MainWindow(QMainWindow):
 #        self.editQtd[0].setValue(2)
 ##############################################
 
+    def calcChange(self):
+        global CHANGE
+        onMoney  = 0
+        onDebit  = 0
+        onCredit = 0
+        if self.editChange.text():
+            try:
+                onMoney = float(self.editChange.text())
+            except:
+                self.editChange.setText('')
+                onMoney = 0
+        if self.editDebit.text():
+            try:
+                onDebit = float(self.editDebit.text())
+            except:
+                self.editDebit.setText('')
+                onDebit = 0
+        if self.editCredit.text():
+            try:
+                onCredit = float(self.editCredit.text())
+            except:
+                self.editCredit.setText('')
+                onCredit = 0
+
+        if onMoney > 0:
+            CHANGE = onMoney-TOTAL+onDebit+onCredit
+        else:
+            CHANGE = 0
+
+        if CHANGE > 0:
+            if onDebit+onCredit > TOTAL:
+                self.labelCalcChange.setVisible(True)
+                if self.checkMoney.checkState() == Qt.Checked:
+                    self.labelCalcChange.setText('Desmarcar dinheiro!')
+                else:
+                    self.labelCalcChange.setText('Recalcular!')
+            elif onDebit+onCredit == TOTAL and self.checkMoney.checkState() == Qt.Unchecked:
+                self.labelCalcChange.setText('Ok!')
+            else:
+                self.labelCalcChange.setVisible(True)
+                self.labelCalcChange.setText('Troco R$ {0:.2f}'.format(CHANGE))
+        else:
+            self.labelCalcChange.setVisible(False)
+            self.labelCalcChange.setText('')
+
+    def changePayment(self):
+        self.payMethod = ''
+        money = False
+        debit = False
+        credit = False
+        if self.checkMoney.checkState() == Qt.Checked:
+            money = True
+        if self.checkDebit.checkState() == Qt.Checked:
+            debit = True
+        if self.checkCredit.checkState() == Qt.Checked:
+            credit = True
+        
+        if money and debit and credit: # 111
+            self.payMethod = 'Dinheiro Débito Crédito '
+            self.labelChange.setVisible(True)
+            self.editChange.setEnabled(True)
+            self.editChange.setVisible(True)
+            #
+            self.editDebit.setEnabled(True)
+            self.editDebit.setVisible(True)
+            self.labelDebit.setVisible(True)
+            #
+            self.editCredit.setEnabled(True)
+            self.editCredit.setVisible(True)
+            self.labelCredit.setVisible(True)
+        elif money and debit: # 110
+            self.payMethod = 'Dinheiro Débito '
+            self.labelChange.setVisible(True)
+            self.editChange.setEnabled(True)
+            self.editChange.setVisible(True)
+            #
+            self.editDebit.setEnabled(True)
+            self.editDebit.setVisible(True)
+            self.labelDebit.setVisible(True)
+            #
+            self.editCredit.setText('')
+            self.editCredit.setEnabled(False)
+            self.editCredit.setVisible(False)
+            self.labelCredit.setVisible(False)
+        elif money and credit: #101
+            self.payMethod = 'Dinheiro Crédito '
+            self.labelChange.setVisible(True)
+            self.editChange.setEnabled(True)
+            self.editChange.setVisible(True)
+            #
+            self.editDebit.setText('')
+            self.labelDebit.setVisible(False)
+            self.editDebit.setEnabled(False)
+            self.editDebit.setVisible(False)
+            #
+            self.editCredit.setEnabled(True)
+            self.editCredit.setVisible(True)
+            self.labelCredit.setVisible(True)
+        elif debit and credit: #011
+            self.payMethod = 'Débito Crédito '
+            self.labelCalcChange.setText('')
+            self.labelCalcChange.setVisible(False)
+            self.editChange.setText('')
+            self.labelChange.setVisible(False)
+            self.editChange.setEnabled(False)
+            self.editChange.setVisible(False)
+            #
+            self.editDebit.setEnabled(True)
+            self.editDebit.setVisible(True)
+            self.labelDebit.setVisible(True)
+            #
+            self.editCredit.setEnabled(True)
+            self.editCredit.setVisible(True)
+            self.labelCredit.setVisible(True)
+        elif money: #100
+            self.payMethod = 'Dinheiro '
+            self.labelChange.setVisible(True)
+            self.editChange.setEnabled(True)
+            self.editChange.setVisible(True)
+            #
+            self.editDebit.setText('')
+            self.labelDebit.setVisible(False)
+            self.editDebit.setEnabled(False)
+            self.editDebit.setVisible(False)
+            #
+            self.editCredit.setText('')
+            self.editCredit.setEnabled(False)
+            self.editCredit.setVisible(False)
+            self.labelCredit.setVisible(False)
+        else:
+            if debit:
+                self.payMethod = 'Débito '
+            if credit:
+                self.payMethod = 'Crédito '
+            self.labelCalcChange.setText('')
+            self.labelCalcChange.setVisible(False)
+            self.editChange.setText('')
+            self.labelChange.setVisible(False)
+            self.editChange.setEnabled(False)
+            self.editChange.setVisible(False)
+            #
+            self.editDebit.setText('')
+            self.labelDebit.setVisible(False)
+            self.editDebit.setEnabled(False)
+            self.editDebit.setVisible(False)
+            #
+            self.editCredit.setText('')
+            self.editCredit.setEnabled(False)
+            self.editCredit.setVisible(False)
+            self.labelCredit.setVisible(False)
+
     def checkMinimumData(self):
-        if TOTAL > 0 and self.editClient.text() and self.editAddr.text() and self.editPhone.text() and self.editBurgh.text() and self.labelRef.text():
-            self.buttonConfirm.setEnabled(True)
+        if TOTAL > 0 and self.editClient.text() and self.editAddr.text() and self.editPhone.text() and self.editBurgh.text() and self.editRef.text() and self.payMethod:
+            debit = 0
+            credit = 0
+            if self.editDebit.text():
+                debit = float(self.editDebit.text())
+            elif self.checkDebit.checkState() == Qt.Checked and self.checkCredit.checkState() == Qt.Checked:
+                self.buttonConfirm.setEnabled(False)
+                return
+
+            if self.editCredit.text():
+                credit = float(self.editCredit.text())
+            elif self.checkDebit.checkState() == Qt.Checked and self.checkCredit.checkState() == Qt.Checked:
+                self.buttonConfirm.setEnabled(False)
+                return
+
+            if self.checkMoney.checkState() == Qt.Unchecked and (self.checkDebit.checkState() == Qt.Unchecked and self.checkDebit.checkState() == Qt.Unchecked):
+                self.buttonConfirm.setEnabled(True)
+            elif CHANGE > 0:
+                if credit > TOTAL or debit > TOTAL or credit+debit > TOTAL:
+                    self.buttonConfirm.setEnabled(False)
+                else:
+                    self.buttonConfirm.setEnabled(True)
+            else:
+                if self.checkDebit.checkState() == Qt.Checked and self.checkCredit.checkState() == Qt.Checked:
+                    if round((debit+credit)*100)/100 == round(TOTAL*100)/100:
+                        self.buttonConfirm.setEnabled(True)
+                    else:
+                        self.buttonConfirm.setEnabled(False)
+                elif self.checkDebit.checkState() == Qt.Checked or self.checkCredit.checkState() == Qt.Checked:
+                    self.buttonConfirm.setEnabled(True)
+                else:
+                    self.buttonConfirm.setEnabled(False)
         else:
             self.buttonConfirm.setEnabled(False)
 
@@ -344,14 +577,14 @@ class MainWindow(QMainWindow):
             templatePath = os.path.join(rootPath,'template.tex')
             with open(templatePath,encoding='utf-8') as replacer:
                 dataIn = replacer.read()
-                dataIn = dataIn.replace('@data',today)
-                dataIn = dataIn.replace('@cliente',client)
-                dataIn = dataIn.replace('@telefone',phone)
-                dataIn = dataIn.replace('@endereco',addr)
-                dataIn = dataIn.replace('@bairro',burgh)
-                dataIn = dataIn.replace('@referencia',ref)
-                dataIn = dataIn.replace('@alergia',allergy)
-                dataIn = dataIn.replace('@obs',obs)
+                dataIn = dataIn.replace('@data', today)
+                dataIn = dataIn.replace('@cliente', client)
+                dataIn = dataIn.replace('@telefone', phone)
+                dataIn = dataIn.replace('@endereco', addr)
+                dataIn = dataIn.replace('@bairro', burgh)
+                dataIn = dataIn.replace('@referencia', ref)
+                dataIn = dataIn.replace('@alergia', allergy)
+                dataIn = dataIn.replace('@obs', obs)
                 dataIn = dataIn.replace('@produto1',item[0]); dataIn = dataIn.replace('@produtom1',itemm[0])
                 dataIn = dataIn.replace('@produto2',item[1]); dataIn = dataIn.replace('@produtom2',itemm[1])
                 dataIn = dataIn.replace('@produto3',item[2]); dataIn = dataIn.replace('@produtom3',itemm[2])
@@ -376,6 +609,8 @@ class MainWindow(QMainWindow):
                 dataIn = dataIn.replace('@entrega','{0:.2f}'.format(TOTALdeliver))
                 dataIn = dataIn.replace('@valorT','{0:.2f}'.format(TOTALpizza))
                 dataIn = dataIn.replace('@TOTAL','{0:.2f}'.format(TOTAL))
+                dataIn = dataIn.replace('@troco','{0:.2f}'.format(abs(CHANGE)))
+                dataIn = dataIn.replace('@dinheiro','{0:.2f}'.format(float(self.editChange.text())))
                 dataIn = dataIn.replace('@pedido',orderStr)
                 dataIn = dataIn.replace('R$','R\$')
                 dataIn = dataIn.replace('Pedido n#','Pedido n\#')
@@ -410,22 +645,82 @@ class MainWindow(QMainWindow):
             with open(logPath, 'a') as appender:
                 appender.write("\n\n"+self.labelOrder.text())
                 appender.write(date.today().strftime(" \n%d/%B %Y\n"))
-                appender.write('Pizzaria R$ {0:.2f}'.format(TOTAL)+'\n')
+                appender.write('Pizzaria '+self.payMethod+'R$ {0:.2f}'.format(TOTALpizza)+'\n')
                 appender.write('Entrega R$ {0:.2f}'.format(deliver)+'\n')
                 appender.close()
     
             with open(logPath, 'r') as reader:
                 text = reader.read()
-                pizza = text.split('Pizzaria R$ ')[1::]
+                pizzaMo = text.split('Pizzaria Dinheiro R$ ')[1::]
+                N = len(pizzaMo)
+                profit = [None]*N
+                for i in range(0,N):
+                    profit[i] = float(pizzaMo[i].split('\n')[0])
+                profitMoTotal = sum(profit)
+                reader.close()
+    
+            with open(logPath, 'r') as reader:
+                text = reader.read()
+                pizzaDe = text.split('Pizzaria Débito R$ ')[1::]
+                N = len(pizzaDe)
+                profit = [None]*N
+                for i in range(0,N):
+                    profit[i] = float(pizzaDe[i].split('\n')[0])
+                profitDeTotal = sum(profit)
+                reader.close()
+    
+            with open(logPath, 'r') as reader:
+                text = reader.read()
+                pizzaCr = text.split('Pizzaria Crédito R$ ')[1::]
+                N = len(pizzaCr)
+                profit = [None]*N
+                for i in range(0,N):
+                    profit[i] = float(pizzaCr[i].split('\n')[0])
+                profitCrTotal = sum(profit)
+                reader.close()
+    
+            with open(logPath, 'r') as reader:
+                text = reader.read()
+                pizza = text.split('Entrega R$ ')[1::]
                 N = len(pizza)
                 profit = [None]*N
                 for i in range(0,N):
                     profit[i] = float(pizza[i].split('\n')[0])
-                profitTotal = sum(profit)
+                deliverTotal = sum(profit)
                 reader.close()
-    
+
+            pass
+
             with open(logPath, 'a') as appender:
-                appender.write("Acumulado R$ {0:.2f}".format(profitTotal)+'\n')
+
+                if self.payMethod == 'Dinheiro Débito Crédito ':
+                    appender.write('Dinheiro R$ {0:.2f}\n'.format(float(self.editChange.text())-CHANGE))
+                    appender.write('Debito R$ {0:.2f}\n'.format(float(self.editDebit.text())))
+                    appender.write('Credito R$ {0:.2f}\n'.format(float(self.editCredit.text())))
+                    profitMoTotal += float(self.editChange.text())-CHANGE
+                    profitDeTotal += float(self.editDebit.text())
+                    profitCrTotal += float(self.editCredit.text())
+                elif self.payMethod == 'Dinheiro Débito ':
+                    appender.write('Dinheiro R$ {0:.2f}\n'.format(float(self.editChange.text())-CHANGE))
+                    appender.write('Debito R$ {0:.2f}\n'.format(float(self.editDebit.text())))
+                    profitMoTotal += float(self.editChange.text())-CHANGE
+                    profitDeTotal += float(self.editDebit.text())
+                elif self.payMethod == 'Dinheiro Crédito ':
+                    appender.write('Dinheiro R$ {0:.2f}\n'.format(float(self.editChange.text())-CHANGE))
+                    appender.write('Credito R$ {0:.2f}\n'.format(float(self.editCredit.text())))
+                    profitMoTotal += float(self.editChange.text())-CHANGE
+                    profitCrTotal += float(self.editCredit.text())
+                elif self.payMethod == 'Débito Crédito ':
+                    appender.write('Debito R$ {0:.2f}\n'.format(float(self.editDebit.text())))
+                    appender.write('Credito R$ {0:.2f}\n'.format(float(self.editCredit.text())))
+                    profitDeTotal += float(self.editDebit.text())
+                    profitCrTotal += float(self.editCredit.text())
+
+                appender.write("    Pizzaria Dinheiro (acumulado) R$ {0:.2f}".format(profitMoTotal)+'\n')
+                appender.write("    Pizzaria Débito (acumulado) R$ {0:.2f}".format(profitDeTotal)+'\n')
+                appender.write("    Pizzaria Crédito(acumulado) R$ {0:.2f}".format(profitCrTotal)+'\n')
+                appender.write("    Pizzaria Total (acumulado) R$ {0:.2f}".format(profitMoTotal+profitDeTotal+profitCrTotal)+'\n')
+                appender.write("    Entrega (acumulado) R$ {0:.2f}".format(deliverTotal)+'\n')
                 appender.close()
             
             self.clearData()
@@ -442,6 +737,10 @@ class MainWindow(QMainWindow):
         self.editRef.setText('')
         self.editAllergy.setText('')
         self.editObs.setText('')
+        self.editDeliver.setText('')
+        self.checkMoney.setCheckState(Qt.Unchecked)
+        self.checkDebit.setCheckState(Qt.Unchecked)
+        self.checkCredit.setCheckState(Qt.Unchecked)
         for i in range (0,maxOrder):
             self.combo[i].setCurrentIndex(0)
             self.combo2[i].setCurrentIndex(0)

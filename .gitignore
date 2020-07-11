@@ -2,3 +2,5 @@
 *.txt
 build/*
 dist/*
+__pycache__/*
+.vscode/*

@@ -25,7 +25,7 @@ Endereço: @endereco \\
 Bairro: @bairro \\
 Referência: @referencia \\
 Alergia: @alergia \\
-Obs.: @obs\\
+Obs.: \textbf{@obs}\\
 
 \begin{table}[!h]
     \centering
@@ -42,6 +42,8 @@ Obs.: @obs\\
             \textbf{Entrega}    &       &          & \textbf{@entrega} \\ \hline
     \end{tabularx}
 \end{table}
-\hfill{\textbf{TOTAL R\$ @TOTAL}}
+Troco para @dinheiro\hfill{\textbf{TOTAL R\$ @TOTAL}}
+
+\hfill{\textbf{Troco R\$ --@troco}}
 \vfill {\noindent \bf Data:} @data \hfill @pedido
 \end{document}

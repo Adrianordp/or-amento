@@ -60,26 +60,27 @@ class MainWindow(QMainWindow):
 
         # Widget object
         self.mainWidget = QWidget()
-        # Layout object
+
+        # Layout object #################################
         self.mainLayout = QGridLayout(self.mainWidget)
         
-        self.infoGroup  = QGroupBox("Dados")
         self.comboGroup = QGroupBox("Pedido")
         self.payGroup   = QGroupBox("Pagamento")
+        self.infoGroup  = QGroupBox("Dados")
         self.endGroup   = QGroupBox("Resumo")
         self.infoGroup.setMaximumHeight(230)
         self.comboGroup.setMaximumHeight(280)
         self.payGroup.setMaximumHeight(60)
         self.endGroup.setMaximumHeight(250)
 
-        self.mainLayout.addWidget(self.infoGroup,  0, 0)
-        self.mainLayout.addWidget(self.comboGroup, 1, 0)
-        self.mainLayout.addWidget(self.payGroup,   2, 0)
+        self.mainLayout.addWidget(self.comboGroup, 0, 0)
+        self.mainLayout.addWidget(self.payGroup,   1, 0)
+        self.mainLayout.addWidget(self.infoGroup,  2, 0)
         self.mainLayout.addWidget(self.endGroup,   3, 0)
 
         self.setCentralWidget(self.mainWidget)
 
-#        # Creating button objects
+        # Creating Info objects ###########################
         self.labelClient  = QLabel("Cliente:")   ; self.editClient   = QLineEdit()
         self.labelPhone   = QLabel("Telefone:")  ; self.editPhone    = QLineEdit()
         self.labelAddr    = QLabel("Endereço:")  ; self.editAddr     = QLineEdit()
@@ -88,6 +89,7 @@ class MainWindow(QMainWindow):
         self.labelAllergy = QLabel("Alergia")    ; self.editAllergy  = QLineEdit()
         self.labelObs     = QLabel("Obs.:")      ; self.editObs      = QLineEdit()
 
+        # Creating Pay objects
         self.payMethod   = ''
         self.checkMoney  = QCheckBox("Dinheiro")
         self.checkDebit  = QCheckBox("Débito")
@@ -106,6 +108,13 @@ class MainWindow(QMainWindow):
         self.editCredit.setVisible(False)
         self.labelCredit.setVisible(False)
 
+        # Creating combo objects
+        self.labelQtd = QLabel("Qtd.")
+        self.labelItem = QLabel("Item")
+        self.labelItem2 = QLabel("Metade")
+        self.labelPriceUStr = QLabel("Preço uni.")
+        self.labelPriceTStr = QLabel("Preço total")
+        
         self.combo  = [None]*maxOrder
         self.combo2 = [None]*maxOrder
         self.labelPriceU = [None]*maxOrder
@@ -125,10 +134,7 @@ class MainWindow(QMainWindow):
         self.editDeliver   = QLineEdit()
         self.labelSubTotal = QLabel("R$ {0:.2f}".format(TOTALpizza))
 
-
-
-        self.labelQtd = QLabel("Qtd."); self.labelItem = QLabel("Item"); self.labelItem2 = QLabel("Metade"); self.labelPriceUStr = QLabel("Preço uni."); self.labelPriceTStr = QLabel("Preço total")
-
+        # Creating End objects ###############################################
         orderStr = "Pedido n#"+str(orderNumber)
         totalStr = "Valor Total = R$ 0.00"
         self.date = date.today().strftime("%d/%B %Y")
@@ -139,22 +145,8 @@ class MainWindow(QMainWindow):
         self.buttonConfirm = QPushButton("Confirmar pedido")
         self.buttonConfirm.setEnabled(False)
 
-        self.infoLayout = QGridLayout(self.infoGroup)
-        self.infoLayout.addWidget(self.labelClient , 0, 0)
-        self.infoLayout.addWidget(self.editClient  , 0, 1)
-        self.infoLayout.addWidget(self.labelPhone  , 1, 0)
-        self.infoLayout.addWidget(self.editPhone   , 1, 1)
-        self.infoLayout.addWidget(self.labelAddr   , 2, 0)
-        self.infoLayout.addWidget(self.editAddr    , 2, 1)
-        self.infoLayout.addWidget(self.labelBurgh  , 3, 0)
-        self.infoLayout.addWidget(self.editBurgh   , 3, 1)
-        self.infoLayout.addWidget(self.labelRef    , 4, 0)
-        self.infoLayout.addWidget(self.editRef     , 4, 1)
-        self.infoLayout.addWidget(self.labelAllergy, 5, 0)
-        self.infoLayout.addWidget(self.editAllergy , 5, 1)
-        self.infoLayout.addWidget(self.labelObs    , 6, 0)
-        self.infoLayout.addWidget(self.editObs     , 6, 1)
-
+        # Creating Layouts ##################################################
+        # Creating comboLayout
         self.comboLayout = QGridLayout(self.comboGroup)
         self.comboLayout.setColumnStretch(1, 1)
         self.comboLayout.addWidget(self.labelItem     , 0, 0)
@@ -173,6 +165,7 @@ class MainWindow(QMainWindow):
         self.comboLayout.addWidget(self.editDeliver,maxOrder+1,1)
         self.comboLayout.addWidget(self.labelSubTotal,maxOrder+1,4)
 
+        # Creating payLayout
         self.payLayout = QGridLayout(self.payGroup)
         self.payLayout.addWidget(self.checkMoney , 0, 0)
         self.payLayout.addWidget(self.checkDebit , 0, 1)
@@ -184,6 +177,24 @@ class MainWindow(QMainWindow):
         self.payLayout.addWidget(self.labelCredit, 0, 7)
         self.payLayout.addWidget(self.editCredit, 0, 8)
 
+        # Creating infoLayout
+        self.infoLayout = QGridLayout(self.infoGroup)
+        self.infoLayout.addWidget(self.labelClient , 0, 0)
+        self.infoLayout.addWidget(self.editClient  , 0, 1)
+        self.infoLayout.addWidget(self.labelPhone  , 1, 0)
+        self.infoLayout.addWidget(self.editPhone   , 1, 1)
+        self.infoLayout.addWidget(self.labelAddr   , 2, 0)
+        self.infoLayout.addWidget(self.editAddr    , 2, 1)
+        self.infoLayout.addWidget(self.labelBurgh  , 3, 0)
+        self.infoLayout.addWidget(self.editBurgh   , 3, 1)
+        self.infoLayout.addWidget(self.labelRef    , 4, 0)
+        self.infoLayout.addWidget(self.editRef     , 4, 1)
+        self.infoLayout.addWidget(self.labelAllergy, 5, 0)
+        self.infoLayout.addWidget(self.editAllergy , 5, 1)
+        self.infoLayout.addWidget(self.labelObs    , 6, 0)
+        self.infoLayout.addWidget(self.editObs     , 6, 1)
+
+        # Creating endLayout
         self.endLayout = QGridLayout(self.endGroup)
         self.endLayout.addWidget(self.labelDate      , 0, 0)
         self.endLayout.addWidget(self.labelOrder     , 0, 1)
@@ -191,10 +202,7 @@ class MainWindow(QMainWindow):
         self.endLayout.addWidget(self.labelCalcChange, 1, 0)
         self.endLayout.addWidget(self.buttonConfirm  , 1, 2)
 
-
-
-
-
+        # Creating connections ################################################
         self.editDeliver.textChanged.connect(self.priceDeliver) #
 
         self.combo[0].currentIndexChanged.connect(lambda: self.price(0))

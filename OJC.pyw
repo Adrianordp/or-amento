@@ -40,15 +40,16 @@ if not os.path.exists(invoicePath):
     os.mkdir(invoicePath)
 if not os.path.exists(logPath):
     # Create log.txt
-    with open(logPath, 'w') as writer:
+    with open(logPath, 'w',encoding='utf-8') as writer:
         writer.write('Relatório de faturamento\n')
         writer.write('------------------------')
         writer.close()
 else:
     # Refresh order number
-    with open(logPath, 'r') as reader:
+    with open(logPath, 'r',encoding='utf-8') as reader:
         orderNumber
-        text = reader.read().split('#')[1::]
+        text = reader.read()
+        text = text.split('#')[1::]
         orderNumber = len(text)+1
         reader.close()
 
@@ -61,11 +62,15 @@ class MainWindow(QMainWindow):
         self.mainWidget = QWidget()
         # Layout object
         self.mainLayout = QGridLayout(self.mainWidget)
-
+        
         self.infoGroup  = QGroupBox("Dados")
-        self.payGroup   = QGroupBox("Pagamento")
         self.comboGroup = QGroupBox("Pedido")
+        self.payGroup   = QGroupBox("Pagamento")
         self.endGroup   = QGroupBox("Resumo")
+        self.infoGroup.setMaximumHeight(230)
+        self.comboGroup.setMaximumHeight(280)
+        self.payGroup.setMaximumHeight(60)
+        self.endGroup.setMaximumHeight(250)
 
         self.mainLayout.addWidget(self.infoGroup,  0, 0)
         self.mainLayout.addWidget(self.comboGroup, 1, 0)
@@ -82,12 +87,6 @@ class MainWindow(QMainWindow):
         self.labelRef     = QLabel("Referência:"); self.editRef      = QLineEdit()
         self.labelAllergy = QLabel("Alergia")    ; self.editAllergy  = QLineEdit()
         self.labelObs     = QLabel("Obs.:")      ; self.editObs      = QLineEdit()
-
-        self.editClient.textChanged.connect(self.checkMinimumData)
-        self.editPhone.textChanged.connect(self.checkMinimumData)
-        self.editAddr.textChanged.connect(self.checkMinimumData)
-        self.editBurgh.textChanged.connect(self.checkMinimumData)
-        self.editRef.textChanged.connect(self.checkMinimumData)
 
         self.payMethod   = ''
         self.checkMoney  = QCheckBox("Dinheiro")
@@ -106,20 +105,6 @@ class MainWindow(QMainWindow):
         self.editCredit.setEnabled(False)
         self.editCredit.setVisible(False)
         self.labelCredit.setVisible(False)
-
-        self.checkMoney.stateChanged.connect(self.changePayment)
-        self.checkDebit.stateChanged.connect(self.changePayment)
-        self.checkCredit.stateChanged.connect(self.changePayment)
-        self.editChange.textChanged.connect(self.calcChange)
-        self.editDebit.textChanged.connect(self.calcChange)
-        self.editCredit.textChanged.connect(self.calcChange)
-        
-        self.checkMoney.stateChanged.connect(self.checkMinimumData)
-        self.checkDebit.stateChanged.connect(self.checkMinimumData)
-        self.checkCredit.stateChanged.connect(self.checkMinimumData)
-        self.editChange.textChanged.connect(self.checkMinimumData)
-        self.editDebit.textChanged.connect(self.checkMinimumData)
-        self.editCredit.textChanged.connect(self.checkMinimumData)
 
         self.combo  = [None]*maxOrder
         self.combo2 = [None]*maxOrder
@@ -140,31 +125,9 @@ class MainWindow(QMainWindow):
         self.editDeliver   = QLineEdit()
         self.labelSubTotal = QLabel("R$ {0:.2f}".format(TOTALpizza))
 
+
+
         self.labelQtd = QLabel("Qtd."); self.labelItem = QLabel("Item"); self.labelItem2 = QLabel("Metade"); self.labelPriceUStr = QLabel("Preço uni."); self.labelPriceTStr = QLabel("Preço total")
-
-        self.combo[0].currentIndexChanged.connect(lambda: self.price(0))
-        self.combo[1].currentIndexChanged.connect(lambda: self.price(1))
-        self.combo[2].currentIndexChanged.connect(lambda: self.price(2))
-        self.combo[3].currentIndexChanged.connect(lambda: self.price(3))
-        self.combo[4].currentIndexChanged.connect(lambda: self.price(4))
-        self.combo[5].currentIndexChanged.connect(lambda: self.price(5))
-        self.combo[6].currentIndexChanged.connect(lambda: self.price(6))
-
-        self.combo2[0].currentIndexChanged.connect(lambda: self.price(0))
-        self.combo2[1].currentIndexChanged.connect(lambda: self.price(1))
-        self.combo2[2].currentIndexChanged.connect(lambda: self.price(2))
-        self.combo2[3].currentIndexChanged.connect(lambda: self.price(3))
-        self.combo2[4].currentIndexChanged.connect(lambda: self.price(4))
-        self.combo2[5].currentIndexChanged.connect(lambda: self.price(5))
-        self.combo2[6].currentIndexChanged.connect(lambda: self.price(6))
-
-        self.editQtd[0].valueChanged.connect(lambda: self.price(0))
-        self.editQtd[1].valueChanged.connect(lambda: self.price(1))
-        self.editQtd[2].valueChanged.connect(lambda: self.price(2))
-        self.editQtd[3].valueChanged.connect(lambda: self.price(3))
-        self.editQtd[4].valueChanged.connect(lambda: self.price(4))
-        self.editQtd[5].valueChanged.connect(lambda: self.price(5))
-        self.editQtd[6].valueChanged.connect(lambda: self.price(6))
 
         orderStr = "Pedido n#"+str(orderNumber)
         totalStr = "Valor Total = R$ 0.00"
@@ -174,10 +137,7 @@ class MainWindow(QMainWindow):
         self.labelTotal = QLabel(totalStr)
         self.labelCalcChange = QLabel(); self.labelCalcChange.setVisible(False)
         self.buttonConfirm = QPushButton("Confirmar pedido")
-        self.buttonConfirm.clicked.connect(self.confirmClick)
         self.buttonConfirm.setEnabled(False)
-
-        self.editDeliver.textChanged.connect(self.priceDeliver)
 
         self.infoLayout = QGridLayout(self.infoGroup)
         self.infoLayout.addWidget(self.labelClient , 0, 0)
@@ -230,6 +190,80 @@ class MainWindow(QMainWindow):
         self.endLayout.addWidget(self.labelTotal     , 0, 2)
         self.endLayout.addWidget(self.labelCalcChange, 1, 0)
         self.endLayout.addWidget(self.buttonConfirm  , 1, 2)
+
+
+
+
+
+        self.editDeliver.textChanged.connect(self.priceDeliver) #
+
+        self.combo[0].currentIndexChanged.connect(lambda: self.price(0))
+        self.combo[1].currentIndexChanged.connect(lambda: self.price(1))
+        self.combo[2].currentIndexChanged.connect(lambda: self.price(2))
+        self.combo[3].currentIndexChanged.connect(lambda: self.price(3))
+        self.combo[4].currentIndexChanged.connect(lambda: self.price(4))
+        self.combo[5].currentIndexChanged.connect(lambda: self.price(5))
+        self.combo[6].currentIndexChanged.connect(lambda: self.price(6))
+        self.combo2[0].currentIndexChanged.connect(lambda: self.price(0))
+        self.combo2[1].currentIndexChanged.connect(lambda: self.price(1))
+        self.combo2[2].currentIndexChanged.connect(lambda: self.price(2))
+        self.combo2[3].currentIndexChanged.connect(lambda: self.price(3))
+        self.combo2[4].currentIndexChanged.connect(lambda: self.price(4))
+        self.combo2[5].currentIndexChanged.connect(lambda: self.price(5))
+        self.combo2[6].currentIndexChanged.connect(lambda: self.price(6))
+
+        self.editQtd[0].valueChanged.connect(lambda: self.price(0))
+        self.editQtd[1].valueChanged.connect(lambda: self.price(1))
+        self.editQtd[2].valueChanged.connect(lambda: self.price(2))
+        self.editQtd[3].valueChanged.connect(lambda: self.price(3))
+        self.editQtd[4].valueChanged.connect(lambda: self.price(4))
+        self.editQtd[5].valueChanged.connect(lambda: self.price(5))
+        self.editQtd[6].valueChanged.connect(lambda: self.price(6))
+
+        self.checkMoney.stateChanged.connect(self.changePayment)
+        self.checkDebit.stateChanged.connect(self.changePayment)
+        self.checkCredit.stateChanged.connect(self.changePayment)
+
+        self.editChange.textChanged.connect(self.calcChange)
+        self.editDebit.textChanged.connect(self.calcChange)
+        self.editCredit.textChanged.connect(self.calcChange)
+        self.editDeliver.textChanged.connect(self.calcChange)
+        self.combo[0].currentIndexChanged.connect(self.calcChange)
+        self.combo[1].currentIndexChanged.connect(self.calcChange)
+        self.combo[2].currentIndexChanged.connect(self.calcChange)
+        self.combo[3].currentIndexChanged.connect(self.calcChange)
+        self.combo[4].currentIndexChanged.connect(self.calcChange)
+        self.combo[5].currentIndexChanged.connect(self.calcChange)
+        self.combo[6].currentIndexChanged.connect(self.calcChange)
+        self.combo2[0].currentIndexChanged.connect(self.calcChange)
+        self.combo2[1].currentIndexChanged.connect(self.calcChange)
+        self.combo2[2].currentIndexChanged.connect(self.calcChange)
+        self.combo2[3].currentIndexChanged.connect(self.calcChange)
+        self.combo2[4].currentIndexChanged.connect(self.calcChange)
+        self.combo2[5].currentIndexChanged.connect(self.calcChange)
+        self.combo2[6].currentIndexChanged.connect(self.calcChange)
+        self.editQtd[0].valueChanged.connect(self.calcChange)
+        self.editQtd[1].valueChanged.connect(self.calcChange)
+        self.editQtd[2].valueChanged.connect(self.calcChange)
+        self.editQtd[3].valueChanged.connect(self.calcChange)
+        self.editQtd[4].valueChanged.connect(self.calcChange)
+        self.editQtd[5].valueChanged.connect(self.calcChange)
+        self.editQtd[6].valueChanged.connect(self.calcChange)
+        
+        self.checkMoney.stateChanged.connect(self.checkMinimumData)
+        self.checkDebit.stateChanged.connect(self.checkMinimumData)
+        self.checkCredit.stateChanged.connect(self.checkMinimumData)
+        self.editChange.textChanged.connect(self.checkMinimumData)
+        self.editDebit.textChanged.connect(self.checkMinimumData)
+        self.editCredit.textChanged.connect(self.checkMinimumData)
+        self.editClient.textChanged.connect(self.checkMinimumData)
+        self.editPhone.textChanged.connect(self.checkMinimumData)
+        self.editAddr.textChanged.connect(self.checkMinimumData)
+        self.editBurgh.textChanged.connect(self.checkMinimumData)
+        self.editRef.textChanged.connect(self.checkMinimumData)
+        self.editDeliver.textChanged.connect(self.checkMinimumData)
+
+        self.buttonConfirm.clicked.connect(self.confirmClick)
 
 ############################################## APAGAR
 #        self.editClient.setText('áéóçãÁÉÓÇÃ')
@@ -649,14 +683,14 @@ class MainWindow(QMainWindow):
             os.remove(invoiceLogPath)
             os.remove(invoiceTexPath)
     
-            with open(logPath, 'a') as appender:
+            with open(logPath, 'a', encoding='utf-8') as appender:
                 appender.write("\n\n"+self.labelOrder.text())
                 appender.write(date.today().strftime(" \n%d/%B %Y\n"))
                 appender.write('Pizzaria '+self.payMethod+'R$ {0:.2f}'.format(TOTALpizza)+'\n')
                 appender.write('Entrega R$ {0:.2f}'.format(deliver)+'\n')
                 appender.close()
     
-            with open(logPath, 'r') as reader:
+            with open(logPath, 'r',encoding='utf-8') as reader:
                 text = reader.read()
                 pizzaMo = text.split('Pizzaria Dinheiro R$ ')[1::]
                 N = len(pizzaMo)
@@ -666,7 +700,7 @@ class MainWindow(QMainWindow):
                 profitMoTotal = sum(profit)
                 reader.close()
     
-            with open(logPath, 'r') as reader:
+            with open(logPath, 'r', encoding='utf-8') as reader:
                 text = reader.read()
                 pizzaDe = text.split('Pizzaria Débito R$ ')[1::]
                 N = len(pizzaDe)
@@ -676,7 +710,7 @@ class MainWindow(QMainWindow):
                 profitDeTotal = sum(profit)
                 reader.close()
     
-            with open(logPath, 'r') as reader:
+            with open(logPath, 'r', encoding='utf-8') as reader:
                 text = reader.read()
                 pizzaCr = text.split('Pizzaria Crédito R$ ')[1::]
                 N = len(pizzaCr)
@@ -686,7 +720,7 @@ class MainWindow(QMainWindow):
                 profitCrTotal = sum(profit)
                 reader.close()
     
-            with open(logPath, 'r') as reader:
+            with open(logPath, 'r', encoding='utf-8') as reader:
                 text = reader.read()
                 pizza = text.split('Entrega R$ ')[1::]
                 N = len(pizza)
@@ -698,7 +732,7 @@ class MainWindow(QMainWindow):
 
             pass
 
-            with open(logPath, 'a') as appender:
+            with open(logPath, 'a', encoding='utf-8') as appender:
 
                 if self.payMethod == 'Dinheiro Débito Crédito ':
                     appender.write('Dinheiro R$ {0:.2f}\n'.format(float(self.editChange.text())-CHANGE))

@@ -3,7 +3,7 @@
 block_cipher = None
 
 
-a = Analysis(['main.pyw'],
+a = Analysis(['OJC.pyw'],
              pathex=['C:\\Users\\adria\\git\\orcamento'],
              binaries=[],
              datas=[('fontawesome.sty','.'),

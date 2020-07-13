@@ -33,6 +33,13 @@ maxOrder     = 7
 flagConfirm = False
 
 rootPath = os.getcwd()
+tempPath = os.getcwd()
+try:
+    tempPath = os.path.abspath(sys._MEIPASS)
+    print("App mode")
+except:
+    print("Python mode")
+
 invoicePath = os.path.join(rootPath,'Orçamentos')
 logPath = os.path.join(invoicePath,'log.txt')
 
@@ -274,14 +281,14 @@ class MainWindow(QMainWindow):
         self.buttonConfirm.clicked.connect(self.confirmClick)
 
 ############################################## APAGAR
-#        self.editClient.setText('áéóçãÁÉÓÇÃ')
-#        self.editAddr.setText('AáéóçãÁÉÓÇ')
-#        self.editPhone.setText('(85) 9.9404-2131')
-#        self.editBurgh.setText('AáéóçãÁÉÓÇ')
-#        self.editRef.setText('AáéóçãÁÉÓÇ')
-#        self.combo[0].setCurrentIndex(1)
-#        self.combo2[0].setCurrentIndex(2)
-#        self.editQtd[0].setValue(2)
+        self.editClient.setText('áéóçãÁÉÓÇÃ')
+        self.editAddr.setText('AáéóçãÁÉÓÇ')
+        self.editPhone.setText('(85) 9.9404-2131')
+        self.editBurgh.setText('AáéóçãÁÉÓÇ')
+        self.editRef.setText('AáéóçãÁÉÓÇ')
+        self.combo[0].setCurrentIndex(1)
+        self.combo2[0].setCurrentIndex(2)
+        self.editQtd[0].setValue(2)
 ##############################################
 
     def calcChange(self):
@@ -617,8 +624,8 @@ class MainWindow(QMainWindow):
     
             orderStr = "Pedido n#"+str(orderNumber)
             self.labelOrder.setText(orderStr)
-    
-            templatePath = os.path.join(rootPath,'template.tex')
+
+            templatePath = os.path.join(tempPath,'template.tex')
             with open(templatePath,encoding='utf-8') as replacer:
                 dataIn = replacer.read()
                 dataIn = dataIn.replace('@data', today)
@@ -672,9 +679,9 @@ class MainWindow(QMainWindow):
             invoicePdf = invoiceName+'.pdf'
             invoiceTexPath = os.path.join(invoicePath,invoiceTex)
             invoicePDFPath = os.path.join(invoicePath,invoicePdf)
-            invoicePdfPath = os.path.join(rootPath,invoicePdf)
-            invoiceAuxPath = os.path.join(rootPath,invoiceAux)
-            invoiceLogPath = os.path.join(rootPath,invoiceLog)
+            invoicePdfPath = os.path.join(tempPath,invoicePdf)
+            invoiceAuxPath = os.path.join(tempPath,invoiceAux)
+            invoiceLogPath = os.path.join(tempPath,invoiceLog)
             with open(invoiceTexPath, 'w',encoding='utf-8') as writer:
                 writer.write(dataIn)
                 writer.close()
@@ -683,10 +690,11 @@ class MainWindow(QMainWindow):
             #os.system('xelatex -output-directory=\''+invoicePath+'\' '+invoiceTexPath)
             #os.system('C:\\Users\\adria\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\xelatex.exe '+invoiceTexPath)
             if osName == "Linux":
-                os.system('xelatex '+invoiceTexPath)
+                os.system('cd '+tempPath+' && xelatex '+invoiceTexPath)
             else:
-                os.system('xelatex.exe '+invoiceTexPath)
-            os.rename(invoicePdfPath,invoicePDFPath)
+                xelatexPath = os.path.join(tempPath,'xelatex.exe')
+                os.system(xelatexPath+' '+invoiceTexPath)
+            shutil.move(invoicePdfPath,invoicePDFPath)
             os.remove(invoiceAuxPath)
             os.remove(invoiceLogPath)
             os.remove(invoiceTexPath)

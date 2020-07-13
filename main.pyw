@@ -2,6 +2,7 @@
 import sys
 import os
 import shutil
+import locale
 import platform
 from datetime import date
 import PySide2
@@ -9,6 +10,7 @@ import PySide2
 from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox, QMessageBox, QCheckBox
 from PySide2.QtGui import *
 
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 osName       = platform.system()
 
 orderNumber  = 1
@@ -25,7 +27,7 @@ menuDrink    = ['Coca-cola', 'Guaraná antártica','Suco de acerola','Suco de go
 menuList     = menuPizza+menuDrink; menuList.sort(); menuList = ['']+menuList
 menuHalf     = ['']+menuPizza
 pizzaPrice   = [19.99, 24.99, 29.99]
-drinkPrice   = [7.99, 5.99, 4.99, 5.99]
+drinkPrice   = [6.99, 1.99, 4.99, 5.99]
 maxOrder     = 7
 
 flagConfirm = False
@@ -611,12 +613,12 @@ class MainWindow(QMainWindow):
                 dataIn = dataIn.replace('@TOTAL','{0:.2f}'.format(TOTAL))
                 dataIn = dataIn.replace('@troco','{0:.2f}'.format(abs(CHANGE)))
                 if self.editChange.text():
-                    dataIn = dataIn.replace('@dinheiro','Troco para R$ {0:.2f}'.format())
+                    dataIn = dataIn.replace('@dinheiro','Troco para R$ {0:.2f}'.format(float(self.editChange.text())))
                     float(self.editChange.text())
                 else:
                     dataIn = dataIn.replace('@dinheiro','')
                 dataIn = dataIn.replace('@metodo',self.payMethod)
-                dataIn = dataIn.replace('@pedido',orderStr)
+                # dataIn = dataIn.replace('@pedido',orderStr)
                 dataIn = dataIn.replace('R$','R\$')
                 dataIn = dataIn.replace('Pedido n#','Pedido n\#')
                 replacer.close()
@@ -759,3 +761,4 @@ if __name__ == '__main__':
     form.setGeometry(100, 100, 500, 500)
     form.show()
     sys.exit(app.exec_())
+f

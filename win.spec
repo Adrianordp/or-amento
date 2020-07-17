@@ -6,10 +6,8 @@ block_cipher = None
 a = Analysis(['Assistente.pyw'],
              pathex=['C:\\Users\\adria\\git\\orcamento'],
              binaries=[],
-             datas=[('fontawesome.sty','.'),
-                    ('fontawesomesymbols-generic.tex','.'),
-                    ('fontawesomesymbols-pdftex.tex','.'),
-                    ('fontawesomesymbols-xeluatex.tex','.'),
+             datas=[('instagram.png','.'),
+                    ('whatsapp.png','.'),
                     ('template.tex','.'),
                     ('xelatex.exe','.')],
              hiddenimports=[],
@@ -35,4 +33,4 @@ exe = EXE(pyz,
           upx=True,
           upx_exclude=[],
           runtime_tmpdir=None,
-          console=True )
+          console=False )

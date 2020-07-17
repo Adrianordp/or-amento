@@ -27,7 +27,7 @@ menuDrink    = ['Coca-cola', 'Guaraná antártica','Suco de acerola','Suco de go
 menuList     = menuPizza+menuDrink; menuList.sort(); menuList = ['']+menuList
 menuHalf     = ['']+menuPizza
 pizzaPrice   = [19.99, 24.99, 29.99]
-drinkPrice   = [6.99, 1.99, 4.99, 5.99]
+drinkPrice   = [2.99, 1.99, 4.99, 5.99]
 maxOrder     = 7
 
 flagConfirm = False
@@ -39,8 +39,9 @@ try:
     print("App mode")
 except:
     print("Python mode")
+    pass
 
-invoicePath = os.path.join(rootPath,'Orçamentos')
+invoicePath = os.path.join(rootPath,'Arquivos')
 logPath = os.path.join(invoicePath,'log.txt')
 
 if not os.path.exists(invoicePath):
@@ -281,14 +282,14 @@ class MainWindow(QMainWindow):
         self.buttonConfirm.clicked.connect(self.confirmClick)
 
 ############################################## APAGAR
-        self.editClient.setText('áéóçãÁÉÓÇÃ')
-        self.editAddr.setText('AáéóçãÁÉÓÇ')
-        self.editPhone.setText('(85) 9.9404-2131')
-        self.editBurgh.setText('AáéóçãÁÉÓÇ')
-        self.editRef.setText('AáéóçãÁÉÓÇ')
-        self.combo[0].setCurrentIndex(1)
-        self.combo2[0].setCurrentIndex(2)
-        self.editQtd[0].setValue(2)
+        # self.editClient.setText('áéóçãÁÉÓÇÃ')
+        # self.editAddr.setText('AáéóçãÁÉÓÇ')
+        # self.editPhone.setText('(85) 9.9404-2131')
+        # self.editBurgh.setText('AáéóçãÁÉÓÇ')
+        # self.editRef.setText('AáéóçãÁÉÓÇ')
+        # self.combo[0].setCurrentIndex(1)
+        # self.combo2[0].setCurrentIndex(2)
+        # self.editQtd[0].setValue(2)
 ##############################################
 
     def calcChange(self):
@@ -581,7 +582,7 @@ class MainWindow(QMainWindow):
     def confirmClick(self):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Information)
-        msg.setText("O pediro será salvo um PDF na pasta Orçamentos e um novo pedido pode ser realizado.")
+        msg.setText("O pediro será salvo um PDF na pasta Arquivos e um novo pedido pode ser realizado.")
         msg.setInformativeText("Revise os dados e clique em Ok se estiver tudo correto")
         msg.setWindowTitle("Confirmar pedido?")
         msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
@@ -629,6 +630,7 @@ class MainWindow(QMainWindow):
             with open(templatePath,encoding='utf-8') as replacer:
                 dataIn = replacer.read()
                 dataIn = dataIn.replace('@data', today)
+                dataIn = dataIn.replace('@path', tempPath.replace('\\','/'))
                 dataIn = dataIn.replace('@cliente', client)
                 dataIn = dataIn.replace('@telefone', phone)
                 dataIn = dataIn.replace('@endereco', addr)
@@ -679,22 +681,34 @@ class MainWindow(QMainWindow):
             invoicePdf = invoiceName+'.pdf'
             invoiceTexPath = os.path.join(invoicePath,invoiceTex)
             invoicePDFPath = os.path.join(invoicePath,invoicePdf)
-            invoicePdfPath = os.path.join(tempPath,invoicePdf)
-            invoiceAuxPath = os.path.join(tempPath,invoiceAux)
-            invoiceLogPath = os.path.join(tempPath,invoiceLog)
             with open(invoiceTexPath, 'w',encoding='utf-8') as writer:
                 writer.write(dataIn)
                 writer.close()
     
-            #print(os.environ.get("_MEIPASS2"))
-            #os.system('xelatex -output-directory=\''+invoicePath+'\' '+invoiceTexPath)
             #os.system('C:\\Users\\adria\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\xelatex.exe '+invoiceTexPath)
+            #'C:\\Users\\adria\\AppData\\Local\\Temp\\_MEI22402\\2020-07-13--1-áéóçãÁÉÓÇÃ.aux'
             if osName == "Linux":
+                invoicePdfPath = os.path.join(tempPath,invoicePdf)
+                invoiceAuxPath = os.path.join(tempPath,invoiceAux)
+                invoiceLogPath = os.path.join(tempPath,invoiceLog)
                 os.system('cd '+tempPath+' && xelatex '+invoiceTexPath)
+                # os.system('cd '+tempPath+' && C:\\Users\\adria\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\xelatex.exe '+invoiceTexPath)
             else:
-                xelatexPath = os.path.join(tempPath,'xelatex.exe')
-                os.system(xelatexPath+' '+invoiceTexPath)
-            shutil.move(invoicePdfPath,invoicePDFPath)
+                invoicePdfPath = os.path.join(rootPath,invoicePdf)
+                invoiceAuxPath = os.path.join(rootPath,invoiceAux)
+                invoiceLogPath = os.path.join(rootPath,invoiceLog)
+                os.system('cd '+tempPath+'; & xelatex.exe '+invoiceTexPath)
+                # print('cd '+tempPath+'; & xelatex.exe '+invoiceTexPath)
+                # xelatexPath = os.path.join(tempPath,'xelatex.exe')
+                # os.system(xelatexPath+' '+invoiceTexPath)
+            
+            print('Old '+invoicePdfPath)
+            print('New '+invoicePDFPath)
+            if os.path.exists(invoicePdfPath):
+                shutil.move(invoicePdfPath, invoicePDFPath)
+            else:
+                print('skipped pdf')
+                pass
             os.remove(invoiceAuxPath)
             os.remove(invoiceLogPath)
             os.remove(invoiceTexPath)

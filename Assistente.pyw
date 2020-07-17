@@ -7,8 +7,41 @@ import platform
 from datetime import date
 import PySide2
 #import PyQt5
-from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox, QMessageBox, QCheckBox
+from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox, QMessageBox, QCheckBox, QCompleter
 from PySide2.QtGui import *
+import mysql.connector as mc
+
+database = mc.connect(
+    host = "localhost",
+    user = "root",
+    passwd = "+95qwe0A",
+    database = "JaChegou"
+)
+
+cursor = database.cursor()
+cursor.execute("SELECT nome FROM clientes")    ; result = cursor.fetchall(); clientList = [i[0] for i in result]
+cursor.execute("SELECT telefone FROM clientes"); result = cursor.fetchall(); phoneList = [i[0] for i in result]
+
+# cursor.execute("CREATE DATABASE JaChegou")
+## cursor.execute("SHOW DATABASES")
+# cursor.execute("CREATE TABLE Produtos (nome VARCHAR(100), preço FLOAT(10))")
+## cursor.execute("SHOW TABLES")
+# formula = "INSERT INTO Produtos (nome, preço) VALUES (%s, %s)"
+# produto = [("Calabresa", 19.99),
+#            ("Mussarela", 19.99),
+#            ("Mista", 19.99),
+#            ("Frango", 19.99),
+#            ("Portuguesa", 24.99),
+#            ("Frango com cream cheese", 24.99),
+#            ("Pepperoni", 29.99)]
+# cursor.executemany(formula, produto)
+# database.commit()
+
+### cursor.execute("SELECT preço FROM Produtos")
+### cursor.execute("SELECT * FROM Produtos WHERE nome LIKE %s", ("%a%",))
+## result = cursor.fetchall()
+## for row in result:
+##     print(row)
 
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 osName       = platform.system()
@@ -89,14 +122,16 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.mainWidget)
 
         # Creating Info objects ###########################
-        self.labelClient  = QLabel("Cliente:")   ; self.editClient   = QLineEdit()
-        self.labelPhone   = QLabel("Telefone:")  ; self.editPhone    = QLineEdit()
+        self.labelClient  = QLabel("Cliente:")   ; self.editClient   = QLineEdit(); self.compClient = QCompleter(clientList, self.editClient)
+        self.labelPhone   = QLabel("Telefone:")  ; self.editPhone    = QLineEdit(); self.compPhone  = QCompleter(phoneList, self.editPhone)
         self.labelAddr    = QLabel("Endereço:")  ; self.editAddr     = QLineEdit()
         self.labelBurgh   = QLabel("Bairro:")    ; self.editBurgh    = QLineEdit()
         self.labelRef     = QLabel("Referência:"); self.editRef      = QLineEdit()
         self.labelAllergy = QLabel("Alergia")    ; self.editAllergy  = QLineEdit()
         self.labelObs     = QLabel("Obs.:")      ; self.editObs      = QLineEdit()
 
+        self.editClient.setCompleter(self.compClient)
+        self.editPhone.setCompleter(self.compPhone)
         # Creating Pay objects
         self.payMethod   = ''
         self.checkMoney  = QCheckBox("Dinheiro")
@@ -266,6 +301,9 @@ class MainWindow(QMainWindow):
         self.editQtd[5].valueChanged.connect(self.calcChange)
         self.editQtd[6].valueChanged.connect(self.calcChange)
         
+        self.compClient.activated.connect(self.checkDatabaseClient)
+        self.compPhone.activated.connect(self.checkDatabasePhone)
+
         self.checkMoney.stateChanged.connect(self.checkMinimumData)
         self.checkDebit.stateChanged.connect(self.checkMinimumData)
         self.checkCredit.stateChanged.connect(self.checkMinimumData)
@@ -291,6 +329,26 @@ class MainWindow(QMainWindow):
         # self.combo2[0].setCurrentIndex(2)
         # self.editQtd[0].setValue(2)
 ##############################################
+
+    def checkDatabasePhone(self):
+        cursor.execute("SELECT * FROM clientes WHERE telefone LIKE %s", (self.editPhone.text()+"%",))
+        result = cursor.fetchall()
+        if result and self.editPhone.text():
+            self.editClient.setText(result[0][1])
+            self.editAddr.setText(result[0][3])
+            self.editBurgh.setText(result[0][4])
+            self.editRef.setText(result[0][5])
+            self.editAllergy.setText(result[0][6])
+
+    def checkDatabaseClient(self):
+        cursor.execute("SELECT * FROM clientes WHERE nome LIKE %s", (self.editClient.text()+"%",))
+        result = cursor.fetchall()
+        if result and self.editClient.text():
+            self.editPhone.setText(result[0][2])
+            self.editAddr.setText(result[0][3])
+            self.editBurgh.setText(result[0][4])
+            self.editRef.setText(result[0][5])
+            self.editAllergy.setText(result[0][6])
 
     def calcChange(self):
         global CHANGE

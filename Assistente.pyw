@@ -27,7 +27,7 @@ menuDrink    = ['Coca-cola', 'Guaraná antártica','Suco de acerola','Suco de go
 menuList     = menuPizza+menuDrink; menuList.sort(); menuList = ['']+menuList
 menuHalf     = ['']+menuPizza
 pizzaPrice   = [19.99, 24.99, 29.99]
-drinkPrice   = [2.99, 1.99, 4.99, 5.99]
+drinkPrice   = [5.99, 4.99, 3.99, 3.99]
 maxOrder     = 7
 
 flagConfirm = False
@@ -487,6 +487,8 @@ class MainWindow(QMainWindow):
             # If combo2 empty
             if self.combo[index].currentText() in tradicionals:
                 itemPrice = pizzaPrice[0]
+                if self.combo[index].currentText() == 'Mista':
+                    itemPrice = 17.99
                 self.combo2[index].setEnabled(True)
             elif self.combo[index].currentText() in specials:
                 itemPrice = pizzaPrice[1]

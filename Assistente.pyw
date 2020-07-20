@@ -35,8 +35,20 @@ cursor.execute("SELECT telefone FROM clientes"); result = cursor.fetchall(); pho
 #            ("Frango", 19.99),
 #            ("Portuguesa", 24.99),
 #            ("Frango com cream cheese", 24.99),
-#            ("Pepperoni", 29.99)]
+#            ("Pepperoni", 29.99),
+#            ("Marguerita", 19.99),
+#            ("Frambacon", 24.99),
+#            ("Frambacheese", 29.99)]
 # cursor.executemany(formula, produto)
+# formula = "INSERT INTO clientes (nome, telefone, endereço, bairro, referência, alergia) VALUES (%s, %s, %s, %s, %s, %s)"
+# clientes = [("Bárbara de Paula"            , "(85) 9.9793-0765", "Rua 4, 144"                 , "Vicente Arruda" , "Rua principal", "-",),
+#             ("João Paulo Moreira Silva"    , "(85) 9.9920-9496", "Rua Eng. Flávio Costa, 1185", "Parque Soledade", "-", "-"),
+#             ("Gildo"                       , "(85) 9.8762-9291", "Tv. José Rocha, casa 27"    , "Centro"         , "Por trás do Oliveira Castro", "-",),
+#             ("Bel Cris"                    , "(85) 9.8411-2543", "Rua 4, 308"                 , "Vicente Arruda" , "Rua principal", "-",),
+#             ("Heide"                       , "(85) 9.9945-5988", "Rua 4, 326"                 , "Vicente Arruda" , "Rua principal", "-",),
+#             ("Luiza"                       , "(85) 9.9219-9784", "Rua 15 de Novembro, 1262"   , "Centro"         , "Próximo ao Oliveira Castro", "-",),
+#             ("Deybde"                      , "(85) 9.8830-7845", "Tv. José da Rocha, 28"      , "Centro"         , "Próximo ao Oliveira Castro", "-",)]
+# cursor.executemany(formula, clientes)
 # database.commit()
 
 ### cursor.execute("SELECT preço FROM Produtos")
@@ -54,16 +66,16 @@ TOTALpizza   = 0
 TOTALdeliver = 0
 TOTAL        = 0
 CHANGE       = 0
-menuPizza    = ['Calabresa','Frango','Frango com cream cheese','Margerita','Mista','Mussarela','Pepperoni', 'Portuguesa']
-tradicionals = ['Calabresa', 'Frango', 'Margerita', 'Mista', 'Mussarela']
-specials     = ['Frango com cream cheese', 'Portuguesa']
-premiums     = ['Pepperoni']
-menuDrink    = ['Coca-cola', 'Guaraná antártica','Suco de acerola','Suco de goiaba']
-menuList     = menuPizza+menuDrink; menuList.sort(); menuList = ['']+menuList
-menuHalf     = ['']+menuPizza
-pizzaPrice   = [19.99, 24.99, 29.99]
-drinkPrice   = [2.99, 1.99, 4.99, 5.99]
-maxOrder     = 7
+menuPizza    = ['Calabresa', 'Frango', 'Frango com cream cheese', 'Marguerita', 'Mista', 'Mussarela', 'Pepperoni', 'Portuguesa', "Frambacon", "Frambacheese"]
+tradicionals = ['Calabresa', 'Frango', 'Marguerita', 'Mista', 'Mussarela']
+specials     = ['Frango com cream cheese', 'Portuguesa', 'Frambacon']
+premiums     = ['Pepperoni', 'Frambacheese']
+menuDrink    = ['Coca-cola', 'Guaraná antártica', 'Suco de acerola', 'Suco de goiaba']
+cursor.execute("SELECT nome FROM produtos")
+result = cursor.fetchall()
+menuList = [i[0] for i in result]; menuList.sort(); menuList = ['']+menuList
+menuHalf = ['']+menuPizza
+maxOrder = 7
 
 flagConfirm = False
 
@@ -162,7 +174,7 @@ class MainWindow(QMainWindow):
         self.labelRef     = QLabel("Referência:"); self.editRef      = QLineEdit()
         self.labelAllergy = QLabel("Alergia")    ; self.editAllergy  = QLineEdit()
         self.labelObs     = QLabel("Obs.:")      ; self.editObs      = QLineEdit()
-
+        
         self.editClient.setCompleter(self.compClient)
         self.editPhone.setCompleter(self.compPhone)
         # Creating Pay objects
@@ -397,11 +409,131 @@ class MainWindow(QMainWindow):
             except:
                 print("Preço inválido")
 
-
     def openDatabaseClients(self):
-        self.dbWindow = QWindow()
+        global clientList, phoneList
+        self.dbWindow = QWidget()
+        self.dbLayout = QGridLayout(self.dbWindow)
+        self.dbEditPhone  = QLineEdit()
+        self.dbEditClient = QLineEdit()
+        self.dbName   = QLineEdit()
+        self.dbPhone  = QLineEdit()
+        self.dbAddr   = QLineEdit()
+        self.dbBurgh  = QLineEdit()
+        self.dbRef    = QLineEdit()
+        self.dbAllerg = QLineEdit()
+        self.dbPushModClient = QPushButton("Modificar")
+        self.dbPushNewClient = QPushButton("Registrar Novo")
+        self.dbLayout.addWidget(QLabel('Pesquisar telefone:'), 0, 0)
+        self.dbLayout.addWidget(QLabel('Pesquisar nome:'), 0, 1)
+        self.dbLayout.addWidget(self.dbEditPhone  , 1, 0)
+        self.dbLayout.addWidget(self.dbEditClient , 1, 1)
+        self.dbLayout.addWidget(QLabel("Nome:")      , 2, 0)
+        self.dbLayout.addWidget(QLabel("Telefone:")  , 3, 0)
+        self.dbLayout.addWidget(QLabel("Endereço:")  , 4, 0)
+        self.dbLayout.addWidget(QLabel("Bairro:")    , 5, 0)
+        self.dbLayout.addWidget(QLabel("Referência:"), 6, 0)
+        self.dbLayout.addWidget(QLabel("Alergia:")   , 7, 0)
+        self.dbLayout.addWidget(self.dbName  , 2, 1)
+        self.dbLayout.addWidget(self.dbPhone , 3, 1)
+        self.dbLayout.addWidget(self.dbAddr  , 4, 1)
+        self.dbLayout.addWidget(self.dbBurgh , 5, 1)
+        self.dbLayout.addWidget(self.dbRef   , 6, 1)
+        self.dbLayout.addWidget(self.dbAllerg, 7, 1)
+        self.dbLayout.addWidget(self.dbPushModClient, 8, 0)
+        self.dbLayout.addWidget(self.dbPushNewClient, 8, 1)
+
+        cursor.execute("SELECT nome FROM clientes")    ; result = cursor.fetchall(); clientList = [i[0] for i in result]
+        cursor.execute("SELECT telefone FROM clientes"); result = cursor.fetchall(); phoneList = [i[0] for i in result]
+        
+        self.dbCompClient = QCompleter(clientList, self.dbEditClient)
+        self.dbCompPhone = QCompleter(phoneList, self.dbEditPhone)
+        self.dbEditClient.setCompleter(self.dbCompClient)
+        self.dbEditPhone.setCompleter(self.dbCompPhone)
+
+        self.dbCompClient.activated.connect(self.dbClientSearch)
+        self.dbCompPhone.activated.connect(self.dbPhoneSearch)
+        self.dbPushModClient.clicked.connect(self.dbModifyClient)
+        self.dbPushNewClient.clicked.connect(self.dbNewClient)
+        cursor.execute("SELECT telefone FROM clientes"); result = cursor.fetchall(); phoneList = [i[0] for i in result]
         self.dbWindow.show()
-        self.dbWindow.destroy()
+    def dbPhoneSearch(self):
+        global result
+        cursor.execute("SELECT * FROM clientes WHERE telefone LIKE %s", (self.dbEditPhone.text(),))
+        result = cursor.fetchall()
+        if result and self.dbEditPhone.text():
+            self.dbEditClient.setText(result[0][1])
+            self.dbName.setText(result[0][1])
+            self.dbPhone.setText(result[0][2])
+            self.dbAddr.setText(result[0][3])
+            self.dbBurgh.setText(result[0][4])
+            self.dbRef.setText(result[0][5])
+            self.dbAllerg.setText(result[0][6])
+        else:
+            self.dbName.setText('')
+            self.dbPhone.setText('')
+            self.dbAddr.setText('')
+            self.dbBurgh.setText('')
+            self.dbRef.setText('')
+            self.dbAllerg.setText('')
+    def dbClientSearch(self):
+        global result
+        cursor.execute("SELECT * FROM clientes WHERE nome LIKE %s", (self.dbEditClient.text(),))
+        result = cursor.fetchall()
+        if result and self.dbEditClient.text():
+            self.dbEditPhone.setText(result[0][2])
+            self.dbName.setText(result[0][1])
+            self.dbPhone.setText(result[0][2])
+            self.dbAddr.setText(result[0][3])
+            self.dbBurgh.setText(result[0][4])
+            self.dbRef.setText(result[0][5])
+            self.dbAllerg.setText(result[0][6])
+        else:
+            self.dbName.setText('')
+            self.dbPhone.setText('')
+            self.dbAddr.setText('')
+            self.dbBurgh.setText('')
+            self.dbRef.setText('')
+            self.dbAllerg.setText('')
+    def dbModifyClient(self):
+        if self.dbEditPhone.text() and self.dbName.text() and self.dbPhone.text() and self.dbAddr.text() and self.dbBurgh.text() and self.dbRef.text() and self.dbAllerg.text():
+            try:
+                newName   = self.dbName.text()
+                newPhone  = self.dbPhone.text()
+                newAddr   = self.dbAddr.text()
+                newBurgh  = self.dbBurgh.text()
+                newRef    = self.dbRef.text()
+                newAllerg = self.dbAllerg.text()
+                cursor.execute("UPDATE clientes SET nome = %s WHERE idcliente =%s",(newName,result[0][0],))
+                cursor.execute("UPDATE clientes SET telefone = %s WHERE idcliente =%s",(newPhone,result[0][0],))
+                cursor.execute("UPDATE clientes SET endereço = %s WHERE idcliente =%s",(newAddr,result[0][0],))
+                cursor.execute("UPDATE clientes SET bairro = %s WHERE idcliente =%s",(newBurgh,result[0][0],))
+                cursor.execute("UPDATE clientes SET referência = %s WHERE idcliente =%s",(newRef,result[0][0],))
+                cursor.execute("UPDATE clientes SET alergia = %s WHERE idcliente =%s",(newAllerg,result[0][0],))
+                database.commit()
+                self.editClient.setText(newName); self.editPhone.setText(newPhone); self.editAddr.setText(newAddr)
+                self.editBurgh.setText(newBurgh) ; self.editRef.setText(newRef)    ; self.editAllergy.setText(newAllerg)
+            except:
+                print("Cliente inválido")
+    def dbNewClient(self):
+        if self.dbEditPhone.text() and self.dbName.text() and self.dbPhone.text() and self.dbAddr.text() and self.dbBurgh.text() and self.dbRef.text() and self.dbAllerg.text():
+            try:
+                newName   = self.dbName.text()
+                newPhone  = self.dbPhone.text()
+                newAddr   = self.dbAddr.text()
+                newBurgh  = self.dbBurgh.text()
+                newRef    = self.dbRef.text()
+                newAllerg = self.dbAllerg.text()
+                cursor.execute("UPDATE clientes SET nome = %s WHERE idcliente =%s",(newName,result[0][0],))
+                cursor.execute("UPDATE clientes SET telefone = %s WHERE idcliente =%s",(newPhone,result[0][0],))
+                cursor.execute("UPDATE clientes SET endereço = %s WHERE idcliente =%s",(newAddr,result[0][0],))
+                cursor.execute("UPDATE clientes SET bairro = %s WHERE idcliente =%s",(newBurgh,result[0][0],))
+                cursor.execute("UPDATE clientes SET referência = %s WHERE idcliente =%s",(newRef,result[0][0],))
+                cursor.execute("UPDATE clientes SET alergia = %s WHERE idcliente =%s",(newAllerg,result[0][0],))
+                database.commit()
+                self.editClient.setText(newName); self.editPhone.setText(newPhone); self.editAddr.setText(newAddr)
+                self.editBurgh.setText(newBurgh) ; self.editRef.setText(newRef)    ; self.editAllergy.setText(newAllerg)
+            except:
+                print("Cliente inválido")
 
 
     def checkDatabasePhone(self):
@@ -621,7 +753,7 @@ class MainWindow(QMainWindow):
         self.nonZeroQtd(index)
         qtd = self.editQtd[index].value()
         item1 = self.combo[index].currentText()
-        item2 =self.combo2[index].currentText() 
+        item2 =self.combo2[index].currentText()
         if not item2:
             # If combo2 empty
             if item1 in tradicionals or item1 in specials or item1 in premiums:

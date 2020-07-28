@@ -7,8 +7,55 @@ import platform
 from datetime import date
 import PySide2
 #import PyQt5
-from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit, QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox, QMessageBox, QCheckBox
+from PySide2.QtWidgets import QApplication, QWidget, QComboBox, QGroupBox, QPushButton, QMainWindow, QTextEdit
+from PySide2.QtWidgets import QLineEdit, QLayout, QGridLayout, QLabel, QSpinBox, QMessageBox, QCheckBox
+from PySide2.QtWidgets import QCompleter, QMenu, QMenuBar, QAction, QShortcut
 from PySide2.QtGui import *
+import mysql.connector as mc
+
+database = mc.connect(
+    host = "localhost",
+    user = "root",
+    passwd = "+95qwe0A",
+    database = "JaChegou"
+)
+
+cursor = database.cursor()
+cursor.execute("SELECT nome FROM clientes")    ; result = cursor.fetchall(); clientList = [i[0] for i in result]
+cursor.execute("SELECT telefone FROM clientes"); result = cursor.fetchall(); phoneList = [i[0] for i in result]
+
+# cursor.execute("CREATE DATABASE JaChegou")
+## cursor.execute("SHOW DATABASES")
+# cursor.execute("CREATE TABLE Produtos (nome VARCHAR(100), preço FLOAT(10))")
+## cursor.execute("SHOW TABLES")
+# formula = "INSERT INTO Produtos (nome, preço) VALUES (%s, %s)"
+# produto = [("Calabresa", 19.99),
+#            ("Mussarela", 19.99),
+#            ("Mista", 19.99),
+#            ("Frango", 19.99),
+#            ("Portuguesa", 24.99),
+#            ("Frango com cream cheese", 24.99),
+#            ("Pepperoni", 29.99),
+#            ("Marguerita", 19.99),
+#            ("Frambacon", 24.99),
+#            ("Frambacheese", 29.99)]
+# cursor.executemany(formula, produto)
+# formula = "INSERT INTO clientes (nome, telefone, endereço, bairro, referência, alergia) VALUES (%s, %s, %s, %s, %s, %s)"
+# clientes = [("Bárbara de Paula"            , "(85) 9.9793-0765", "Rua 4, 144"                 , "Vicente Arruda" , "Rua principal", "-",),
+#             ("João Paulo Moreira Silva"    , "(85) 9.9920-9496", "Rua Eng. Flávio Costa, 1185", "Parque Soledade", "-", "-"),
+#             ("Gildo"                       , "(85) 9.8762-9291", "Tv. José Rocha, casa 27"    , "Centro"         , "Por trás do Oliveira Castro", "-",),
+#             ("Bel Cris"                    , "(85) 9.8411-2543", "Rua 4, 308"                 , "Vicente Arruda" , "Rua principal", "-",),
+#             ("Heide"                       , "(85) 9.9945-5988", "Rua 4, 326"                 , "Vicente Arruda" , "Rua principal", "-",),
+#             ("Luiza"                       , "(85) 9.9219-9784", "Rua 15 de Novembro, 1262"   , "Centro"         , "Próximo ao Oliveira Castro", "-",),
+#             ("Deybde"                      , "(85) 9.8830-7845", "Tv. José da Rocha, 28"      , "Centro"         , "Próximo ao Oliveira Castro", "-",)]
+# cursor.executemany(formula, clientes)
+# database.commit()
+
+### cursor.execute("SELECT preço FROM Produtos")
+### cursor.execute("SELECT * FROM Produtos WHERE nome LIKE %s", ("%a%",))
+## result = cursor.fetchall()
+## for row in result:
+##     print(row)
 
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 osName       = platform.system()
@@ -19,16 +66,14 @@ TOTALpizza   = 0
 TOTALdeliver = 0
 TOTAL        = 0
 CHANGE       = 0
-menuPizza    = ['Calabresa','Frango','Frango com cream cheese','Margerita','Mista','Mussarela','Pepperoni', 'Portuguesa']
-tradicionals = ['Calabresa', 'Frango', 'Margerita', 'Mista', 'Mussarela']
-specials     = ['Frango com cream cheese', 'Portuguesa']
-premiums     = ['Pepperoni']
-menuDrink    = ['Coca-cola', 'Guaraná antártica','Suco de acerola','Suco de goiaba']
-menuList     = menuPizza+menuDrink; menuList.sort(); menuList = ['']+menuList
-menuHalf     = ['']+menuPizza
-pizzaPrice   = [19.99, 24.99, 26.99]
-drinkPrice   = [5.99, 4.99, 3.99, 3.99]
-maxOrder     = 7
+cursor.execute('select nome from produtos where categoria = "Pizza"')
+result = cursor.fetchall()
+menuPizza = [i[0] for i in result]; menuPizza.sort()
+cursor.execute("SELECT nome FROM produtos")
+result = cursor.fetchall()
+menuList = [i[0] for i in result]; menuList.sort(); menuList = ['']+menuList
+menuHalf = ['']+menuPizza
+maxOrder = 7
 
 flagConfirm = False
 
@@ -67,36 +112,69 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
 
         # Widget object
-        self.mainWidget = QWidget()
+        self.mainWidget = QWidget(self)
 
         # Layout object #################################
         self.mainLayout = QGridLayout(self.mainWidget)
+
+        self.menuBar = QMenuBar(self.mainWidget)
+        self.setMenuWidget(self.menuBar)
+        self.menuBar.setMinimumWidth(200)
+        self.menuBar.setMaximumWidth(3000)
+        self.functions = self.menuBar.addMenu("Funções")
+        self.database = self.menuBar.addMenu("Banco de dados")
+        
+        self.actionClear = QAction("Limpar",self.mainWidget)
+        self.functions.addAction(self.actionClear)
+        self.actionClear.triggered.connect(self.clearData)
+        self.actionClear.setShortcut("Ctrl+l")
+
+        self.actionConfirm = QAction("Confirmar",self.mainWidget)
+        self.functions.addAction(self.actionConfirm)
+        self.actionConfirm.triggered.connect(self.confirmClick)
+        self.actionConfirm.setShortcut("Ctrl+s")
+        self.actionConfirm.setEnabled(False)
+
+        self.actionProducts = QAction("Produtos",self.mainWidget)
+        self.database.addAction(self.actionProducts)
+        self.actionProducts.triggered.connect(self.openDatabaseProduts)
+
+        self.actionClients = QAction("Clientes",self.mainWidget)
+        self.database.addAction(self.actionClients)
+        self.actionClients.triggered.connect(self.openDatabaseClients)
         
         self.comboGroup = QGroupBox("Pedido")
         self.payGroup   = QGroupBox("Pagamento")
         self.infoGroup  = QGroupBox("Dados")
         self.endGroup   = QGroupBox("Resumo")
-        self.infoGroup.setMaximumHeight(230)
-        self.comboGroup.setMaximumHeight(280)
-        self.payGroup.setMaximumHeight(60)
-        self.endGroup.setMaximumHeight(250)
+        # self.infoGroup.setMaximumHeight(230)
+        self.comboGroup.setMaximumSize(500, 500)
+        self.comboGroup.setMinimumSize(500, 300)
+        self.infoGroup.setMaximumSize(3000, 500)
+        self.infoGroup.setMinimumSize( 300, 230)
+        self.payGroup.setMaximumSize(  500,  80)
+        self.payGroup.setMinimumSize(  500,  80)
+        self.endGroup.setMaximumSize(  500,  80)
+        self.endGroup.setMinimumSize(  500,  80)
 
         self.mainLayout.addWidget(self.comboGroup, 0, 0)
+        self.mainLayout.addWidget(self.infoGroup,  0, 1)
         self.mainLayout.addWidget(self.payGroup,   1, 0)
-        self.mainLayout.addWidget(self.infoGroup,  2, 0)
-        self.mainLayout.addWidget(self.endGroup,   3, 0)
+        self.mainLayout.addWidget(self.endGroup,   2, 0)
 
         self.setCentralWidget(self.mainWidget)
 
         # Creating Info objects ###########################
-        self.labelClient  = QLabel("Cliente:")   ; self.editClient   = QLineEdit()
-        self.labelPhone   = QLabel("Telefone:")  ; self.editPhone    = QLineEdit()
+        self.labelClient  = QLabel("Cliente:")   ; self.editClient   = QLineEdit(); self.compClient = QCompleter(clientList, self.editClient)
+        self.labelPhone   = QLabel("Telefone:")  ; self.editPhone    = QLineEdit(); self.compPhone  = QCompleter(phoneList, self.editPhone)
         self.labelAddr    = QLabel("Endereço:")  ; self.editAddr     = QLineEdit()
         self.labelBurgh   = QLabel("Bairro:")    ; self.editBurgh    = QLineEdit()
         self.labelRef     = QLabel("Referência:"); self.editRef      = QLineEdit()
         self.labelAllergy = QLabel("Alergia")    ; self.editAllergy  = QLineEdit()
         self.labelObs     = QLabel("Obs.:")      ; self.editObs      = QLineEdit()
-
+        
+        self.editClient.setCompleter(self.compClient)
+        self.editPhone.setCompleter(self.compPhone)
         # Creating Pay objects
         self.payMethod   = ''
         self.checkMoney  = QCheckBox("Dinheiro")
@@ -150,13 +228,11 @@ class MainWindow(QMainWindow):
         self.labelOrder = QLabel(orderStr)
         self.labelTotal = QLabel(totalStr)
         self.labelCalcChange = QLabel(); self.labelCalcChange.setVisible(False)
-        self.buttonConfirm = QPushButton("Confirmar pedido")
-        self.buttonConfirm.setEnabled(False)
 
         # Creating Layouts ##################################################
         # Creating comboLayout
         self.comboLayout = QGridLayout(self.comboGroup)
-        self.comboLayout.setColumnStretch(1, 1)
+        # self.comboLayout.setColumnStretch(1, 1)
         self.comboLayout.addWidget(self.labelItem     , 0, 0)
         self.comboLayout.addWidget(self.labelItem2    , 0, 1)
         self.comboLayout.addWidget(self.labelQtd      , 0, 2)
@@ -208,7 +284,6 @@ class MainWindow(QMainWindow):
         self.endLayout.addWidget(self.labelOrder     , 0, 1)
         self.endLayout.addWidget(self.labelTotal     , 0, 2)
         self.endLayout.addWidget(self.labelCalcChange, 1, 0)
-        self.endLayout.addWidget(self.buttonConfirm  , 1, 2)
 
         # Creating connections ################################################
         self.editDeliver.textChanged.connect(self.priceDeliver) #
@@ -266,6 +341,9 @@ class MainWindow(QMainWindow):
         self.editQtd[5].valueChanged.connect(self.calcChange)
         self.editQtd[6].valueChanged.connect(self.calcChange)
         
+        self.compClient.activated.connect(self.checkDatabaseClient)
+        self.compPhone.activated.connect(self.checkDatabasePhone)
+
         self.checkMoney.stateChanged.connect(self.checkMinimumData)
         self.checkDebit.stateChanged.connect(self.checkMinimumData)
         self.checkCredit.stateChanged.connect(self.checkMinimumData)
@@ -279,8 +357,6 @@ class MainWindow(QMainWindow):
         self.editRef.textChanged.connect(self.checkMinimumData)
         self.editDeliver.textChanged.connect(self.checkMinimumData)
 
-        self.buttonConfirm.clicked.connect(self.confirmClick)
-
 ############################################## APAGAR
         # self.editClient.setText('áéóçãÁÉÓÇÃ')
         # self.editAddr.setText('AáéóçãÁÉÓÇ')
@@ -291,6 +367,313 @@ class MainWindow(QMainWindow):
         # self.combo2[0].setCurrentIndex(2)
         # self.editQtd[0].setValue(2)
 ##############################################
+
+    def openDatabaseProduts(self):
+        global menuList
+        self.dbWindow = QWidget()
+        self.dbLayout = QGridLayout(self.dbWindow)
+        self.dbCombo  = QComboBox()
+        self.dbName   = QLineEdit()
+        self.dbPrice  = QLineEdit()
+        self.checkPizza = QCheckBox("Pizza")
+        self.dbPushModProduct = QPushButton("Modificar")
+        self.dbPushNewProduct = QPushButton("Adicionar")
+        self.dbPushDelProduct = QPushButton("Remover")
+        self.dbLayout.addWidget(QLabel('Pesquisar:') , 0, 0)
+        self.dbLayout.addWidget(QLabel('Nome:'), 0, 1)
+        self.dbLayout.addWidget(QLabel('Preço:') , 0, 2)
+        self.dbLayout.addWidget(self.dbCombo , 1, 0)
+        self.dbLayout.addWidget(self.dbName  , 1, 1)
+        self.dbLayout.addWidget(self.dbPrice , 1, 2)
+        self.dbLayout.addWidget(self.checkPizza      , 2, 0)
+        self.dbLayout.addWidget(self.dbPushModProduct, 2, 2)
+        self.dbLayout.addWidget(self.dbPushNewProduct, 3, 2)
+        self.dbLayout.addWidget(self.dbPushDelProduct, 4, 2)
+
+        self.dbCombo.currentIndexChanged.connect(self.dbProductSearch)
+        self.dbPushModProduct.clicked.connect(self.dbModifyProduct)
+        self.dbPushNewProduct.clicked.connect(self.dbNewProduct)
+        self.dbPushDelProduct.clicked.connect(self.dbDeleteProduct)
+        cursor.execute("SELECT nome FROM produtos"); result = cursor.fetchall(); menuList = [i[0] for i in result]
+        menuList.insert(0, '')
+        self.dbCombo.insertItems(0, menuList)
+        self.dbWindow.show()
+    def dbProductSearch(self):
+        global result
+        cursor.execute("SELECT * FROM produtos WHERE nome LIKE %s", (self.dbCombo.currentText(),))
+        result = cursor.fetchall()
+        if result and self.dbCombo.currentText():
+            self.dbName.setText(result[0][1])
+            self.dbPrice.setText('{0:.2f}'.format(result[0][2]))
+            if result[0][3] == 'Pizza':
+                self.checkPizza.setCheckState(Qt.Checked)
+            else:
+                self.checkPizza.setCheckState(Qt.Unchecked)
+        else:
+            self.dbName.setText('')
+            self.dbPrice.setText('')
+            self.checkPizza.setCheckState(Qt.Unchecked)
+
+    def dbModifyProduct(self):
+        global menuHalf, result
+        if self.dbCombo.currentText() and self.dbName.text() and self.dbPrice.text():
+            # try:
+            if True:
+                newPrice = float(self.dbPrice.text())
+                newName = self.dbName.text()
+                newCategory = ''
+                idproduto = result[0][0]
+                if self.checkPizza.checkState() == Qt.Checked:
+                    newCategory = 'Pizza'
+                cursor.execute("UPDATE produtos SET nome = %s WHERE idproduto =%s",(newName, idproduto,))
+                cursor.execute("UPDATE produtos SET preço = %s WHERE idproduto =%s",(newPrice, idproduto,))
+                cursor.execute('UPDATE produtos SET categoria = %s WHERE idproduto =%s',(newCategory, idproduto,))
+
+                cursor.execute('SELECT nome FROM produtos where categoria = "Pizza"')
+                resultPizza = cursor.fetchall(); menuPizza = [i[0] for i in resultPizza]; menuPizza.sort()
+                menuHalf = ['']+menuPizza
+                for i in range (0, maxOrder):
+                    self.combo2[i].clear()
+                    self.combo2[i].insertItems(0, menuHalf)
+                database.commit()
+            # except:
+            #     print("Produto inválido")
+    def dbNewProduct(self):
+        global menuList, menuPizza, menuHalf, result
+        if self.dbName.text() and self.dbPrice.text():
+            try:
+                newPrice = float(self.dbPrice.text())
+                newName = self.dbName.text()
+                newCategory = ''
+                if self.checkPizza.checkState() == Qt.Checked:
+                    newCategory = 'Pizza'
+                formula = "INSERT INTO produtos (nome, preço, categoria) VALUES (%s, %s, %s)"
+                
+                produto = [(newName, newPrice, newCategory)]
+                cursor.executemany(formula, produto)
+                database.commit()
+                cursor.execute('SELECT * FROM produtos ORDER BY idproduto DESC LIMIT 1;')
+                result = cursor.fetchall()
+                cursor.execute("SELECT nome FROM produtos")
+                resultList = cursor.fetchall(); menuList = [i[0] for i in resultList]
+                menuList.sort(); menuList.insert(0,'')
+                cursor.execute('SELECT nome FROM produtos where categoria = "Pizza"')
+                resultPizza = cursor.fetchall(); menuPizza = [i[0] for i in resultPizza]; menuPizza.sort()
+                menuList.sort(); menuHalf = ['']+menuPizza
+                self.dbCombo.clear()
+                self.dbCombo.insertItems(0, menuList)
+                for i in range (0, maxOrder):
+                    self.combo[i].clear()
+                    self.combo[i].insertItems(0, menuList)
+                for i in range (0, maxOrder):
+                    self.combo2[i].clear()
+                    self.combo2[i].insertItems(0, menuHalf)
+            except:
+                print("Produto inválido")
+    def dbDeleteProduct(self):
+        global menuList, result
+        name = self.dbCombo.currentText()
+        try:
+            formula = "DELETE FROM produtos WHERE nome = %s"
+            product = [(name,)]
+            cursor.executemany(formula, product)
+            database.commit()
+            cursor.execute("SELECT nome FROM produtos") ; result = cursor.fetchall(); menuList = [i[0] for i in result]
+            menuList.sort(); menuList.insert(0,'')
+            cursor.execute('SELECT nome FROM produtos where categoria = "Pizza"')
+            result = cursor.fetchall(); menuPizza = [i[0] for i in result]; menuPizza.sort()
+            menuHalf = ['']+menuPizza
+            self.dbCombo.clear()
+            self.dbCombo.insertItems(0, menuList)
+            for i in range (0,maxOrder):
+                self.combo[i].clear()
+                self.combo[i].insertItems(0, menuList)
+            for i in range (0, maxOrder):
+                self.combo2[i].clear()
+                self.combo2[i].insertItems(0, menuHalf)
+        except:
+            print("Produto inválido")
+
+    def openDatabaseClients(self):
+        global clientList, phoneList
+        self.dbWindow = QWidget()
+        self.dbLayout = QGridLayout(self.dbWindow)
+        self.dbEditPhone  = QLineEdit()
+        self.dbEditClient = QLineEdit()
+        self.dbName   = QLineEdit()
+        self.dbPhone  = QLineEdit()
+        self.dbAddr   = QLineEdit()
+        self.dbBurgh  = QLineEdit()
+        self.dbRef    = QLineEdit()
+        self.dbAllerg = QLineEdit()
+        self.dbPushModClient = QPushButton("Modificar")
+        self.dbPushNewClient = QPushButton("Registrar Novo")
+        self.dbPushDeleteClient = QPushButton("Apagar Cliente")
+        self.dbLayout.addWidget(QLabel('Pesquisar telefone:'), 0, 0)
+        self.dbLayout.addWidget(QLabel('Pesquisar nome:'), 0, 1)
+        self.dbLayout.addWidget(self.dbEditPhone  , 1, 0)
+        self.dbLayout.addWidget(self.dbEditClient , 1, 1)
+        self.dbLayout.addWidget(QLabel("Nome:")      , 2, 0)
+        self.dbLayout.addWidget(QLabel("Telefone:")  , 3, 0)
+        self.dbLayout.addWidget(QLabel("Endereço:")  , 4, 0)
+        self.dbLayout.addWidget(QLabel("Bairro:")    , 5, 0)
+        self.dbLayout.addWidget(QLabel("Referência:"), 6, 0)
+        self.dbLayout.addWidget(QLabel("Alergia:")   , 7, 0)
+        self.dbLayout.addWidget(self.dbName  , 2, 1)
+        self.dbLayout.addWidget(self.dbPhone , 3, 1)
+        self.dbLayout.addWidget(self.dbAddr  , 4, 1)
+        self.dbLayout.addWidget(self.dbBurgh , 5, 1)
+        self.dbLayout.addWidget(self.dbRef   , 6, 1)
+        self.dbLayout.addWidget(self.dbAllerg, 7, 1)
+        self.dbLayout.addWidget(self.dbPushModClient, 8, 0)
+        self.dbLayout.addWidget(self.dbPushNewClient, 8, 1)
+        self.dbLayout.addWidget(self.dbPushDeleteClient, 9, 1)
+
+        cursor.execute("SELECT nome FROM clientes")    ; result = cursor.fetchall(); clientList = [i[0] for i in result]
+        cursor.execute("SELECT telefone FROM clientes"); result = cursor.fetchall(); phoneList = [i[0] for i in result]
+        
+        self.dbCompClient = QCompleter(clientList, self.dbEditClient)
+        self.dbCompPhone = QCompleter(phoneList, self.dbEditPhone)
+        self.dbEditClient.setCompleter(self.dbCompClient)
+        self.dbEditPhone.setCompleter(self.dbCompPhone)
+
+        self.dbCompClient.activated.connect(self.dbClientSearch)
+        self.dbCompPhone.activated.connect(self.dbPhoneSearch)
+        self.dbPushModClient.clicked.connect(self.dbModifyClient)
+        self.dbPushNewClient.clicked.connect(self.dbNewClient)
+        self.dbPushDeleteClient.clicked.connect(self.dbDeleteClient)
+        cursor.execute("SELECT telefone FROM clientes"); result = cursor.fetchall(); phoneList = [i[0] for i in result]
+        self.dbWindow.show()
+    def dbPhoneSearch(self):
+        global result
+        cursor.execute("SELECT * FROM clientes WHERE telefone LIKE %s", (self.dbEditPhone.text(),))
+        result = cursor.fetchall()
+        if result and self.dbEditPhone.text():
+            self.dbEditClient.setText(result[0][1])
+            self.dbName.setText(result[0][1])
+            self.dbPhone.setText(result[0][2])
+            self.dbAddr.setText(result[0][3])
+            self.dbBurgh.setText(result[0][4])
+            self.dbRef.setText(result[0][5])
+            self.dbAllerg.setText(result[0][6])
+        else:
+            self.dbName.setText('')
+            self.dbPhone.setText('')
+            self.dbAddr.setText('')
+            self.dbBurgh.setText('')
+            self.dbRef.setText('')
+            self.dbAllerg.setText('')
+    def dbClientSearch(self):
+        global result
+        cursor.execute("SELECT * FROM clientes WHERE nome LIKE %s", (self.dbEditClient.text(),))
+        result = cursor.fetchall()
+        if result and self.dbEditClient.text():
+            self.dbEditPhone.setText(result[0][2])
+            self.dbName.setText(result[0][1])
+            self.dbPhone.setText(result[0][2])
+            self.dbAddr.setText(result[0][3])
+            self.dbBurgh.setText(result[0][4])
+            self.dbRef.setText(result[0][5])
+            self.dbAllerg.setText(result[0][6])
+        else:
+            self.dbName.setText('')
+            self.dbPhone.setText('')
+            self.dbAddr.setText('')
+            self.dbBurgh.setText('')
+            self.dbRef.setText('')
+            self.dbAllerg.setText('')
+    def dbModifyClient(self):
+        global clientList, phoneList, result
+        if self.dbEditPhone.text() and self.dbName.text() and self.dbPhone.text() and self.dbAddr.text() and self.dbBurgh.text() and self.dbRef.text() and self.dbAllerg.text():
+            try:
+                newName   = self.dbName.text()
+                newPhone  = self.dbPhone.text()
+                newAddr   = self.dbAddr.text()
+                newBurgh  = self.dbBurgh.text()
+                newRef    = self.dbRef.text()
+                newAllerg = self.dbAllerg.text()
+                cursor.execute("UPDATE clientes SET nome = %s WHERE idcliente =%s",(newName, result[0][0],))
+                cursor.execute("UPDATE clientes SET telefone = %s WHERE idcliente =%s",(newPhone,result[0][0],))
+                cursor.execute("UPDATE clientes SET endereço = %s WHERE idcliente =%s",(newAddr,result[0][0],))
+                cursor.execute("UPDATE clientes SET bairro = %s WHERE idcliente =%s",(newBurgh,result[0][0],))
+                cursor.execute("UPDATE clientes SET referência = %s WHERE idcliente =%s",(newRef,result[0][0],))
+                cursor.execute("UPDATE clientes SET alergia = %s WHERE idcliente =%s",(newAllerg,result[0][0],))
+                database.commit()
+                self.editClient.setText(newName); self.editPhone.setText(newPhone); self.editAddr.setText(newAddr)
+                self.editBurgh.setText(newBurgh); self.editRef.setText(newRef)    ; self.editAllergy.setText(newAllerg)
+                cursor.execute("SELECT nome FROM clientes")    ; result = cursor.fetchall(); clientList = [i[0] for i in result]
+                cursor.execute("SELECT telefone FROM clientes"); result = cursor.fetchall(); phoneList = [i[0] for i in result]
+                self.compClient = QCompleter(clientList, self.editClient)
+                self.compPhone = QCompleter(phoneList, self.editPhone)
+                self.editClient.setCompleter(self.compClient)
+                self.editPhone.setCompleter(self.compPhone)
+            except:
+                print("Cliente inválido")
+    def dbNewClient(self):
+        global clientList, phoneList
+        if self.dbName.text() and self.dbPhone.text() and self.dbAddr.text() and self.dbBurgh.text() and self.dbRef.text() and self.dbAllerg.text():
+            try:
+                newName   = self.dbName.text()
+                newPhone  = self.dbPhone.text()
+                newAddr   = self.dbAddr.text()
+                newBurgh  = self.dbBurgh.text()
+                newRef    = self.dbRef.text()
+                newAllerg = self.dbAllerg.text()
+                formula = "INSERT INTO clientes (nome, telefone, endereço, bairro, referência, alergia) VALUES (%s, %s, %s, %s, %s, %s)"
+                cliente = [(newName, newPhone, newAddr, newBurgh, newRef, newAllerg)]
+                cursor.executemany(formula, cliente)
+                database.commit()
+                self.editClient.setText(newName); self.editPhone.setText(newPhone); self.editAddr.setText(newAddr)
+                self.editBurgh.setText(newBurgh); self.editRef.setText(newRef)    ; self.editAllergy.setText(newAllerg)
+                cursor.execute("SELECT nome FROM clientes")    ; result = cursor.fetchall(); clientList = [i[0] for i in result]
+                cursor.execute("SELECT telefone FROM clientes"); result = cursor.fetchall(); phoneList = [i[0] for i in result]
+                self.compClient = QCompleter(clientList, self.editClient)
+                self.compPhone = QCompleter(phoneList, self.editPhone)
+                self.editClient.setCompleter(self.compClient)
+                self.editPhone.setCompleter(self.compPhone)
+            except:
+                print("Cliente inválido")
+    def dbDeleteClient(self):
+        global clientList, phoneList, result
+        dbPhone = self.dbEditPhone.text()
+        if dbPhone in phoneList:
+            try:
+                formula = "DELETE FROM clientes WHERE telefone = %s"
+                cliente = [(self.dbEditPhone.text(),)]
+                cursor.executemany(formula, cliente)
+                database.commit()
+                
+                cursor.execute("SELECT nome FROM clientes")    ; result = cursor.fetchall(); clientList = [i[0] for i in result]
+                cursor.execute("SELECT telefone FROM clientes"); result = cursor.fetchall(); phoneList = [i[0] for i in result]
+                self.compClient = QCompleter(clientList, self.editClient)
+                self.compPhone = QCompleter(phoneList, self.editPhone)
+                self.editClient.setCompleter(self.compClient)
+                self.editPhone.setCompleter(self.compPhone)
+            except:
+                print("Cliente inválido")
+
+
+    def checkDatabasePhone(self):
+        cursor.execute("SELECT * FROM clientes WHERE telefone LIKE %s", (self.editPhone.text()+"%",))
+        result = cursor.fetchall()
+        if result and self.editPhone.text():
+            self.editClient.setText(result[0][1])
+            self.editAddr.setText(result[0][3])
+            self.editBurgh.setText(result[0][4])
+            self.editRef.setText(result[0][5])
+            self.editAllergy.setText(result[0][6])
+
+
+    def checkDatabaseClient(self):
+        cursor.execute("SELECT * FROM clientes WHERE nome LIKE %s", (self.editClient.text()+"%",))
+        result = cursor.fetchall()
+        if result and self.editClient.text():
+            self.editPhone.setText(result[0][2])
+            self.editAddr.setText(result[0][3])
+            self.editBurgh.setText(result[0][4])
+            self.editRef.setText(result[0][5])
+            self.editAllergy.setText(result[0][6])
+
 
     def calcChange(self):
         global CHANGE
@@ -336,6 +719,7 @@ class MainWindow(QMainWindow):
         else:
             self.labelCalcChange.setVisible(False)
             self.labelCalcChange.setText('')
+
 
     def changePayment(self):
         self.payMethod = ''
@@ -443,6 +827,7 @@ class MainWindow(QMainWindow):
             self.editCredit.setVisible(False)
             self.labelCredit.setVisible(False)
 
+
     def checkMinimumData(self):
         if TOTAL > 0 and self.editClient.text() and self.editAddr.text() and self.editPhone.text() and self.editBurgh.text() and self.editRef.text() and self.payMethod:
             debit = 0
@@ -450,89 +835,81 @@ class MainWindow(QMainWindow):
             if self.editDebit.text():
                 debit = float(self.editDebit.text())
             elif self.checkDebit.checkState() == Qt.Checked and self.checkCredit.checkState() == Qt.Checked:
-                self.buttonConfirm.setEnabled(False)
+                self.actionConfirm.setEnabled(False)
                 return
 
             if self.editCredit.text():
                 credit = float(self.editCredit.text())
             elif self.checkDebit.checkState() == Qt.Checked and self.checkCredit.checkState() == Qt.Checked:
-                self.buttonConfirm.setEnabled(False)
+                self.actionConfirm.setEnabled(False)
                 return
 
             if self.checkMoney.checkState() == Qt.Unchecked and (self.checkDebit.checkState() == Qt.Unchecked and self.checkDebit.checkState() == Qt.Unchecked):
-                self.buttonConfirm.setEnabled(True)
+                self.actionConfirm.setEnabled(True)
             elif CHANGE > 0:
                 if credit > TOTAL or debit > TOTAL or credit+debit > TOTAL:
-                    self.buttonConfirm.setEnabled(False)
+                    self.actionConfirm.setEnabled(False)
                 else:
-                    self.buttonConfirm.setEnabled(True)
+                    self.actionConfirm.setEnabled(True)
             else:
                 if self.checkDebit.checkState() == Qt.Checked and self.checkCredit.checkState() == Qt.Checked:
                     if round((debit+credit)*100)/100 == round(TOTAL*100)/100:
-                        self.buttonConfirm.setEnabled(True)
+                        self.actionConfirm.setEnabled(True)
                     else:
-                        self.buttonConfirm.setEnabled(False)
+                        self.actionConfirm.setEnabled(False)
                 elif self.checkDebit.checkState() == Qt.Checked or self.checkCredit.checkState() == Qt.Checked:
-                    self.buttonConfirm.setEnabled(True)
+                    self.actionConfirm.setEnabled(True)
                 else:
-                    self.buttonConfirm.setEnabled(False)
+                    self.actionConfirm.setEnabled(False)
         else:
-            self.buttonConfirm.setEnabled(False)
+            self.actionConfirm.setEnabled(False)
+
 
     def price(self, index):
         global priceVec
         self.nonZeroQtd(index)
         qtd = self.editQtd[index].value()
-        if not self.combo2[index].currentText():
+        item1 = self.combo[index].currentText()
+        item2 =self.combo2[index].currentText()
+        if not item2:
             # If combo2 empty
-            if self.combo[index].currentText() in tradicionals:
-                itemPrice = pizzaPrice[0]
+            if item1 in menuPizza:
+                cursor.execute("SELECT * FROM produtos WHERE nome =%s",(item1,))
+                result = cursor.fetchall()
+                itemPrice = result[0][2]
                 self.combo2[index].setEnabled(True)
-            elif self.combo[index].currentText() in specials:
-                itemPrice = pizzaPrice[1]
-                self.combo2[index].setEnabled(True)
-            elif self.combo[index].currentText() in premiums:
-                itemPrice = pizzaPrice[2]
-                self.combo2[index].setEnabled(True)
-            elif self.combo[index].currentText() in menuDrink:
-                for i in range(0,len(menuDrink)):
-                    if self.combo[index].currentText() == menuDrink[i]:
-                        itemPrice = drinkPrice[i]
-                        break
+            elif item1:
+                cursor.execute("SELECT * FROM produtos WHERE nome =%s",(item1,))
+                result = cursor.fetchall()
+                itemPrice = result[0][2]
                 self.combo2[index].setCurrentIndex(0)
                 self.combo2[index].setEnabled(False)
             else:
                 itemPrice = 0
                 self.combo2[index].setCurrentIndex(0)
                 self.combo2[index].setEnabled(False)
+
         else:
             #if combo2 exists
-            if self.combo[index].currentText() in tradicionals:
-                itemPrice1 = pizzaPrice[0]
-            elif self.combo[index].currentText() in specials:
-                itemPrice1 = pizzaPrice[1]
-            elif self.combo[index].currentText() in premiums:
-                itemPrice1 = pizzaPrice[2]
-            elif self.combo[index].currentText() in menuDrink:
-                for i in range(0,len(menuDrink)):
-                    if self.combo[index].currentText() == menuDrink[i]:
-                        itemPrice1 = drinkPrice[i]*2
-                        break
+            if item1 in menuPizza:
+                cursor.execute("SELECT * FROM produtos WHERE nome =%s",(item1,))
+                result = cursor.fetchall()
+                itemPrice1 = result[0][2]
+            elif item1:
+                cursor.execute("SELECT * FROM produtos WHERE nome =%s",(item1,))
+                result = cursor.fetchall()
+                itemPrice = result[0][2]*2
                 self.combo2[index].setCurrentIndex(0)
                 self.combo2[index].setEnabled(False)
             else:
-                itemPrice1 = 0
+                itemPrice = 0
                 self.combo2[index].setCurrentIndex(0)
                 self.combo2[index].setEnabled(False)
 
-            if self.combo2[index].currentText() in tradicionals:
-                itemPrice2 = pizzaPrice[0]
-            elif self.combo2[index].currentText() in specials:
-                itemPrice2 = pizzaPrice[1]
-            elif self.combo2[index].currentText() in premiums:
-                itemPrice2 = pizzaPrice[2]
-            else:
-                itemPrice2 = 0
+            if item2 in menuPizza:
+                cursor.execute("SELECT * FROM produtos WHERE nome =%s",(item2,))
+                result = cursor.fetchall()
+                itemPrice2 = result[0][2]
 
             itemPrice = (itemPrice1+itemPrice2)/2
 
@@ -541,7 +918,8 @@ class MainWindow(QMainWindow):
         self.labelPriceT[index].setText('R$ {0:.2f}'.format(priceVec[index]))
 
         self.priceDeliver()
-    
+
+
     def nonZeroQtd(self,index):
         qtd = self.editQtd[index].value()
         if qtd == 0 and self.combo[index].currentText():
@@ -571,6 +949,7 @@ class MainWindow(QMainWindow):
         self.labelSubTotal.setText("R$ {0:.2f}".format(TOTALpizza))
         self.checkMinimumData()
 
+
     def msgbtn(self,i):
         global flagConfirm
         if i.text() == "OK" or i.text() == "&OK":
@@ -578,8 +957,8 @@ class MainWindow(QMainWindow):
         else:
             flagConfirm = False
 
-    # CLICK: Confirm order
-    def confirmClick(self):
+
+    def confirmClick(self): # CLICK: Confirm order
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Information)
         msg.setText("O pediro será salvo um PDF na pasta Arquivos e um novo pedido pode ser realizado.")
@@ -800,6 +1179,7 @@ class MainWindow(QMainWindow):
             orderStr = "Pedido n#"+str(orderNumber)
             self.labelOrder.setText(orderStr)
 
+
     def clearData(self):
         self.editClient.setText('')
         self.editAddr.setText('')
@@ -817,12 +1197,13 @@ class MainWindow(QMainWindow):
             self.combo2[i].setCurrentIndex(0)
             self.editQtd[i].setValue(0)
 
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setStyle("fusion")
     form = MainWindow()
     form.setWindowTitle('Orçamento: Já chegou!')
     form.setGeometry(100, 100, 500, 500)
-    form.show()
+    form.showMaximized()
     sys.exit(app.exec_())
 f

@@ -66,16 +66,15 @@ TOTALpizza   = 0
 TOTALdeliver = 0
 TOTAL        = 0
 CHANGE       = 0
-menuPizza    = ['Calabresa', 'Frango', 'Frango com cream cheese', 'Marguerita', 'Mista', 'Mussarela', 'Pepperoni', 'Portuguesa', "Frambacon", "Frambacheese"]
-tradicionals = ['Calabresa', 'Frango', 'Marguerita', 'Mista', 'Mussarela']
-specials     = ['Frango com cream cheese', 'Portuguesa', 'Frambacon']
-premiums     = ['Pepperoni', 'Frambacheese']
-menuDrink    = ['Coca-cola', 'Guaraná antártica', 'Suco de acerola', 'Suco de goiaba']
+cursor.execute('select nome from produtos where categoria = "Pizza"')
+result = cursor.fetchall()
+menuPizza = [i[0] for i in result]; menuPizza.sort()
 cursor.execute("SELECT nome FROM produtos")
 result = cursor.fetchall()
 menuList = [i[0] for i in result]; menuList.sort(); menuList = ['']+menuList
 menuHalf = ['']+menuPizza
 maxOrder = 7
+
 
 flagConfirm = False
 
@@ -150,14 +149,14 @@ class MainWindow(QMainWindow):
         self.infoGroup  = QGroupBox("Dados")
         self.endGroup   = QGroupBox("Resumo")
         # self.infoGroup.setMaximumHeight(230)
-        self.comboGroup.setMaximumSize(500,300)
-        self.comboGroup.setMinimumSize(500,300)
-        self.infoGroup.setMaximumSize(3000,230)
-        self.infoGroup.setMinimumSize(300,230)
-        self.payGroup.setMaximumSize(500,60)
-        self.payGroup.setMinimumSize(500,60)
-        self.endGroup.setMaximumSize(500,68)
-        self.endGroup.setMinimumSize(500,68)
+        self.comboGroup.setMaximumSize(500, 500)
+        self.comboGroup.setMinimumSize(500, 300)
+        self.infoGroup.setMaximumSize(3000, 500)
+        self.infoGroup.setMinimumSize( 300, 230)
+        self.payGroup.setMaximumSize(  500,  80)
+        self.payGroup.setMinimumSize(  500,  80)
+        self.endGroup.setMaximumSize(  500,  80)
+        self.endGroup.setMinimumSize(  500,  80)
 
         self.mainLayout.addWidget(self.comboGroup, 0, 0)
         self.mainLayout.addWidget(self.infoGroup,  0, 1)
@@ -371,22 +370,34 @@ class MainWindow(QMainWindow):
 ##############################################
 
     def openDatabaseProduts(self):
+        global menuList
         self.dbWindow = QWidget()
         self.dbLayout = QGridLayout(self.dbWindow)
         self.dbCombo  = QComboBox()
         self.dbName   = QLineEdit()
         self.dbPrice  = QLineEdit()
-        self.dbButton = QPushButton("Modificar")
-        self.dbLayout.addWidget(self.dbCombo , 0, 0)
-        self.dbLayout.addWidget(self.dbName  , 0, 1)
-        self.dbLayout.addWidget(self.dbPrice , 0, 2)
-        self.dbLayout.addWidget(self.dbButton, 1, 2)
+        self.checkPizza = QCheckBox("Pizza")
+        self.dbPushModProduct = QPushButton("Modificar")
+        self.dbPushNewProduct = QPushButton("Adicionar")
+        self.dbPushDelProduct = QPushButton("Remover")
+        self.dbLayout.addWidget(QLabel('Pesquisar:') , 0, 0)
+        self.dbLayout.addWidget(QLabel('Nome:'), 0, 1)
+        self.dbLayout.addWidget(QLabel('Preço:') , 0, 2)
+        self.dbLayout.addWidget(self.dbCombo , 1, 0)
+        self.dbLayout.addWidget(self.dbName  , 1, 1)
+        self.dbLayout.addWidget(self.dbPrice , 1, 2)
+        self.dbLayout.addWidget(self.checkPizza      , 2, 0)
+        self.dbLayout.addWidget(self.dbPushModProduct, 2, 2)
+        self.dbLayout.addWidget(self.dbPushNewProduct, 3, 2)
+        self.dbLayout.addWidget(self.dbPushDelProduct, 4, 2)
 
         self.dbCombo.currentIndexChanged.connect(self.dbProductSearch)
-        self.dbButton.clicked.connect(self.dbProductModify)
-        cursor.execute("SELECT nome FROM produtos"); result = cursor.fetchall(); productList = [i[0] for i in result]
-        productList.insert(0,'')
-        self.dbCombo.insertItems(0,productList)
+        self.dbPushModProduct.clicked.connect(self.dbModifyProduct)
+        self.dbPushNewProduct.clicked.connect(self.dbNewProduct)
+        self.dbPushDelProduct.clicked.connect(self.dbDeleteProduct)
+        cursor.execute("SELECT nome FROM produtos"); result = cursor.fetchall(); menuList = [i[0] for i in result]
+        menuList.insert(0, '')
+        self.dbCombo.insertItems(0, menuList)
         self.dbWindow.show()
     def dbProductSearch(self):
         global result
@@ -395,19 +406,94 @@ class MainWindow(QMainWindow):
         if result and self.dbCombo.currentText():
             self.dbName.setText(result[0][1])
             self.dbPrice.setText('{0:.2f}'.format(result[0][2]))
+            if result[0][3] == 'Pizza':
+                self.checkPizza.setCheckState(Qt.Checked)
+            else:
+                self.checkPizza.setCheckState(Qt.Unchecked)
         else:
             self.dbName.setText('')
             self.dbPrice.setText('')
-    def dbProductModify(self):
+            self.checkPizza.setCheckState(Qt.Unchecked)
+
+    def dbModifyProduct(self):
+        global menuHalf, result
         if self.dbCombo.currentText() and self.dbName.text() and self.dbPrice.text():
+            # try:
+            if True:
+                newPrice = float(self.dbPrice.text())
+                newName = self.dbName.text()
+                newCategory = ''
+                idproduto = result[0][0]
+                if self.checkPizza.checkState() == Qt.Checked:
+                    newCategory = 'Pizza'
+                cursor.execute("UPDATE produtos SET nome = %s WHERE idproduto =%s",(newName, idproduto,))
+                cursor.execute("UPDATE produtos SET preço = %s WHERE idproduto =%s",(newPrice, idproduto,))
+                cursor.execute('UPDATE produtos SET categoria = %s WHERE idproduto =%s',(newCategory, idproduto,))
+
+                cursor.execute('SELECT nome FROM produtos where categoria = "Pizza"')
+                resultPizza = cursor.fetchall(); menuPizza = [i[0] for i in resultPizza]; menuPizza.sort()
+                menuHalf = ['']+menuPizza
+                for i in range (0, maxOrder):
+                    self.combo2[i].clear()
+                    self.combo2[i].insertItems(0, menuHalf)
+                database.commit()
+            # except:
+            #     print("Produto inválido")
+    def dbNewProduct(self):
+        global menuList, menuPizza, menuHalf, result
+        if self.dbName.text() and self.dbPrice.text():
             try:
                 newPrice = float(self.dbPrice.text())
                 newName = self.dbName.text()
-                cursor.execute("UPDATE produtos SET nome = %s WHERE idprodutos =%s",(newName,result[0][0],))
-                cursor.execute("UPDATE produtos SET preço = %s WHERE idprodutos =%s",(newPrice,result[0][0],))
+                newCategory = ''
+                if self.checkPizza.checkState() == Qt.Checked:
+                    newCategory = 'Pizza'
+                formula = "INSERT INTO produtos (nome, preço, categoria) VALUES (%s, %s, %s)"
+                
+                produto = [(newName, newPrice, newCategory)]
+                cursor.executemany(formula, produto)
                 database.commit()
+                cursor.execute('SELECT * FROM produtos ORDER BY idproduto DESC LIMIT 1;')
+                result = cursor.fetchall()
+                cursor.execute("SELECT nome FROM produtos")
+                resultList = cursor.fetchall(); menuList = [i[0] for i in resultList]
+                menuList.sort(); menuList.insert(0,'')
+                cursor.execute('SELECT nome FROM produtos where categoria = "Pizza"')
+                resultPizza = cursor.fetchall(); menuPizza = [i[0] for i in resultPizza]; menuPizza.sort()
+                menuList.sort(); menuHalf = ['']+menuPizza
+                self.dbCombo.clear()
+                self.dbCombo.insertItems(0, menuList)
+                for i in range (0, maxOrder):
+                    self.combo[i].clear()
+                    self.combo[i].insertItems(0, menuList)
+                for i in range (0, maxOrder):
+                    self.combo2[i].clear()
+                    self.combo2[i].insertItems(0, menuHalf)
             except:
-                print("Preço inválido")
+                print("Produto inválido")
+    def dbDeleteProduct(self):
+        global menuList, result
+        name = self.dbCombo.currentText()
+        try:
+            formula = "DELETE FROM produtos WHERE nome = %s"
+            product = [(name,)]
+            cursor.executemany(formula, product)
+            database.commit()
+            cursor.execute("SELECT nome FROM produtos") ; result = cursor.fetchall(); menuList = [i[0] for i in result]
+            menuList.sort(); menuList.insert(0,'')
+            cursor.execute('SELECT nome FROM produtos where categoria = "Pizza"')
+            result = cursor.fetchall(); menuPizza = [i[0] for i in result]; menuPizza.sort()
+            menuHalf = ['']+menuPizza
+            self.dbCombo.clear()
+            self.dbCombo.insertItems(0, menuList)
+            for i in range (0,maxOrder):
+                self.combo[i].clear()
+                self.combo[i].insertItems(0, menuList)
+            for i in range (0, maxOrder):
+                self.combo2[i].clear()
+                self.combo2[i].insertItems(0, menuHalf)
+        except:
+            print("Produto inválido")
 
     def openDatabaseClients(self):
         global clientList, phoneList
@@ -423,6 +509,7 @@ class MainWindow(QMainWindow):
         self.dbAllerg = QLineEdit()
         self.dbPushModClient = QPushButton("Modificar")
         self.dbPushNewClient = QPushButton("Registrar Novo")
+        self.dbPushDeleteClient = QPushButton("Apagar Cliente")
         self.dbLayout.addWidget(QLabel('Pesquisar telefone:'), 0, 0)
         self.dbLayout.addWidget(QLabel('Pesquisar nome:'), 0, 1)
         self.dbLayout.addWidget(self.dbEditPhone  , 1, 0)
@@ -441,6 +528,7 @@ class MainWindow(QMainWindow):
         self.dbLayout.addWidget(self.dbAllerg, 7, 1)
         self.dbLayout.addWidget(self.dbPushModClient, 8, 0)
         self.dbLayout.addWidget(self.dbPushNewClient, 8, 1)
+        self.dbLayout.addWidget(self.dbPushDeleteClient, 9, 1)
 
         cursor.execute("SELECT nome FROM clientes")    ; result = cursor.fetchall(); clientList = [i[0] for i in result]
         cursor.execute("SELECT telefone FROM clientes"); result = cursor.fetchall(); phoneList = [i[0] for i in result]
@@ -454,6 +542,7 @@ class MainWindow(QMainWindow):
         self.dbCompPhone.activated.connect(self.dbPhoneSearch)
         self.dbPushModClient.clicked.connect(self.dbModifyClient)
         self.dbPushNewClient.clicked.connect(self.dbNewClient)
+        self.dbPushDeleteClient.clicked.connect(self.dbDeleteClient)
         cursor.execute("SELECT telefone FROM clientes"); result = cursor.fetchall(); phoneList = [i[0] for i in result]
         self.dbWindow.show()
     def dbPhoneSearch(self):
@@ -495,6 +584,7 @@ class MainWindow(QMainWindow):
             self.dbRef.setText('')
             self.dbAllerg.setText('')
     def dbModifyClient(self):
+        global clientList, phoneList, result
         if self.dbEditPhone.text() and self.dbName.text() and self.dbPhone.text() and self.dbAddr.text() and self.dbBurgh.text() and self.dbRef.text() and self.dbAllerg.text():
             try:
                 newName   = self.dbName.text()
@@ -503,7 +593,7 @@ class MainWindow(QMainWindow):
                 newBurgh  = self.dbBurgh.text()
                 newRef    = self.dbRef.text()
                 newAllerg = self.dbAllerg.text()
-                cursor.execute("UPDATE clientes SET nome = %s WHERE idcliente =%s",(newName,result[0][0],))
+                cursor.execute("UPDATE clientes SET nome = %s WHERE idcliente =%s",(newName, result[0][0],))
                 cursor.execute("UPDATE clientes SET telefone = %s WHERE idcliente =%s",(newPhone,result[0][0],))
                 cursor.execute("UPDATE clientes SET endereço = %s WHERE idcliente =%s",(newAddr,result[0][0],))
                 cursor.execute("UPDATE clientes SET bairro = %s WHERE idcliente =%s",(newBurgh,result[0][0],))
@@ -511,11 +601,18 @@ class MainWindow(QMainWindow):
                 cursor.execute("UPDATE clientes SET alergia = %s WHERE idcliente =%s",(newAllerg,result[0][0],))
                 database.commit()
                 self.editClient.setText(newName); self.editPhone.setText(newPhone); self.editAddr.setText(newAddr)
-                self.editBurgh.setText(newBurgh) ; self.editRef.setText(newRef)    ; self.editAllergy.setText(newAllerg)
+                self.editBurgh.setText(newBurgh); self.editRef.setText(newRef)    ; self.editAllergy.setText(newAllerg)
+                cursor.execute("SELECT nome FROM clientes")    ; result = cursor.fetchall(); clientList = [i[0] for i in result]
+                cursor.execute("SELECT telefone FROM clientes"); result = cursor.fetchall(); phoneList = [i[0] for i in result]
+                self.compClient = QCompleter(clientList, self.editClient)
+                self.compPhone = QCompleter(phoneList, self.editPhone)
+                self.editClient.setCompleter(self.compClient)
+                self.editPhone.setCompleter(self.compPhone)
             except:
                 print("Cliente inválido")
     def dbNewClient(self):
-        if self.dbEditPhone.text() and self.dbName.text() and self.dbPhone.text() and self.dbAddr.text() and self.dbBurgh.text() and self.dbRef.text() and self.dbAllerg.text():
+        global clientList, phoneList
+        if self.dbName.text() and self.dbPhone.text() and self.dbAddr.text() and self.dbBurgh.text() and self.dbRef.text() and self.dbAllerg.text():
             try:
                 newName   = self.dbName.text()
                 newPhone  = self.dbPhone.text()
@@ -523,15 +620,36 @@ class MainWindow(QMainWindow):
                 newBurgh  = self.dbBurgh.text()
                 newRef    = self.dbRef.text()
                 newAllerg = self.dbAllerg.text()
-                cursor.execute("UPDATE clientes SET nome = %s WHERE idcliente =%s",(newName,result[0][0],))
-                cursor.execute("UPDATE clientes SET telefone = %s WHERE idcliente =%s",(newPhone,result[0][0],))
-                cursor.execute("UPDATE clientes SET endereço = %s WHERE idcliente =%s",(newAddr,result[0][0],))
-                cursor.execute("UPDATE clientes SET bairro = %s WHERE idcliente =%s",(newBurgh,result[0][0],))
-                cursor.execute("UPDATE clientes SET referência = %s WHERE idcliente =%s",(newRef,result[0][0],))
-                cursor.execute("UPDATE clientes SET alergia = %s WHERE idcliente =%s",(newAllerg,result[0][0],))
+                formula = "INSERT INTO clientes (nome, telefone, endereço, bairro, referência, alergia) VALUES (%s, %s, %s, %s, %s, %s)"
+                cliente = [(newName, newPhone, newAddr, newBurgh, newRef, newAllerg)]
+                cursor.executemany(formula, cliente)
                 database.commit()
                 self.editClient.setText(newName); self.editPhone.setText(newPhone); self.editAddr.setText(newAddr)
-                self.editBurgh.setText(newBurgh) ; self.editRef.setText(newRef)    ; self.editAllergy.setText(newAllerg)
+                self.editBurgh.setText(newBurgh); self.editRef.setText(newRef)    ; self.editAllergy.setText(newAllerg)
+                cursor.execute("SELECT nome FROM clientes")    ; result = cursor.fetchall(); clientList = [i[0] for i in result]
+                cursor.execute("SELECT telefone FROM clientes"); result = cursor.fetchall(); phoneList = [i[0] for i in result]
+                self.compClient = QCompleter(clientList, self.editClient)
+                self.compPhone = QCompleter(phoneList, self.editPhone)
+                self.editClient.setCompleter(self.compClient)
+                self.editPhone.setCompleter(self.compPhone)
+            except:
+                print("Cliente inválido")
+    def dbDeleteClient(self):
+        global clientList, phoneList, result
+        dbPhone = self.dbEditPhone.text()
+        if dbPhone in phoneList:
+            try:
+                formula = "DELETE FROM clientes WHERE telefone = %s"
+                cliente = [(self.dbEditPhone.text(),)]
+                cursor.executemany(formula, cliente)
+                database.commit()
+                
+                cursor.execute("SELECT nome FROM clientes")    ; result = cursor.fetchall(); clientList = [i[0] for i in result]
+                cursor.execute("SELECT telefone FROM clientes"); result = cursor.fetchall(); phoneList = [i[0] for i in result]
+                self.compClient = QCompleter(clientList, self.editClient)
+                self.compPhone = QCompleter(phoneList, self.editPhone)
+                self.editClient.setCompleter(self.compClient)
+                self.editPhone.setCompleter(self.compPhone)
             except:
                 print("Cliente inválido")
 
@@ -756,7 +874,7 @@ class MainWindow(QMainWindow):
         item2 =self.combo2[index].currentText()
         if not item2:
             # If combo2 empty
-            if item1 in tradicionals or item1 in specials or item1 in premiums:
+            if item1 in menuPizza:
                 cursor.execute("SELECT * FROM produtos WHERE nome =%s",(item1,))
                 result = cursor.fetchall()
                 itemPrice = result[0][2]
@@ -774,7 +892,7 @@ class MainWindow(QMainWindow):
 
         else:
             #if combo2 exists
-            if item1 in tradicionals or item1 in specials or item1 in premiums:
+            if item1 in menuPizza:
                 cursor.execute("SELECT * FROM produtos WHERE nome =%s",(item1,))
                 result = cursor.fetchall()
                 itemPrice1 = result[0][2]
@@ -789,7 +907,7 @@ class MainWindow(QMainWindow):
                 self.combo2[index].setCurrentIndex(0)
                 self.combo2[index].setEnabled(False)
 
-            if item2 in tradicionals or item2 in specials or item2 in premiums:
+            if item2 in menuPizza:
                 cursor.execute("SELECT * FROM produtos WHERE nome =%s",(item2,))
                 result = cursor.fetchall()
                 itemPrice2 = result[0][2]
